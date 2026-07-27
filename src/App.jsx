@@ -13,7 +13,7 @@ export default function App() {
       line: 'LÍNEA 01 — ORIGINAL',
       price: 34900,
       deposit: 17500,
-      image: '/1000375045.png',
+      image: '/1000375046.png',
       badge: 'PREVENTA EXCLUSIVA',
       badgeColor: 'bg-zinc-800 text-yellow-400 border-yellow-500/30',
       description: 'Corte oversize premium. Algodón pesado de alta durabilidad. Diseñada para soportar el entrenamiento diario y marcar presencia en la calle.',
@@ -211,7 +211,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* COMUNIDAD */}
+      {/* COMUNIDAD PRIVADA */}
       <section className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-yellow-500/20 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center sm:text-left">
