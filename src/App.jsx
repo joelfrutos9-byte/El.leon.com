@@ -26,7 +26,7 @@ export default function App() {
       line: 'LÍNEA 02 — CAMPAÑA BOLIVIA 2026',
       price: 34900,
       deposit: 17500,
-      image: '/1785148947849.png',
+      image: '/1785148963897.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
       description: 'El 100% de la ganancia de esta prenda financia el viaje y la preparación en Bolivia. Verde combate con estética táctica.',
@@ -39,10 +39,10 @@ export default function App() {
       line: 'LÍNEA 02 — CAMPAÑA BOLIVIA 2026',
       price: 58000,
       deposit: 29000,
-      image: '/1785148963897.png',
+      image: '/1785148947849.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Frisa invisible pesada premium. Capucha doble, puños reforzados y estampado de alto impacto en espalda.',
+      description: 'Frisa invisible pesada premium. Capucha doble, puños reinforced y estampado de alto impacto en espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     }
   ];
