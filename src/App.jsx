@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ShoppingBag, ShieldCheck, Zap, MessageCircle, Users, Award, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, ShieldCheck, Zap, MessageCircle, Users, Award, Instagram, Flame, Dumbbell, Target } from 'lucide-react';
 
 export default function App() {
   const [selectedSize, setSelectedSize] = useState({});
   const whatsappNumber = "5493425236731";
+  const instagramUrl = "https://instagram.com/joelbox_";
 
   const products = [
     {
@@ -42,7 +43,7 @@ export default function App() {
       image: '/1785148947849.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Frisa invisible pesada premium. Capucha doble, puños reinforced y estampado de alto impacto en espalda.',
+      description: 'Frisa invisible pesada premium. Capucha doble, puños reforzados y estampado de alto impacto en espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     }
   ];
@@ -83,18 +84,40 @@ export default function App() {
             <span className="text-xl font-black tracking-tighter text-yellow-400">EL LEÓN</span>
             <span className="text-xs bg-zinc-800 text-zinc-300 font-bold px-2 py-0.5 rounded border border-zinc-700">STORE</span>
           </div>
-          <a 
-            href="#catalogo" 
-            className="text-xs font-bold bg-yellow-400 text-black px-3 py-1.5 rounded-full hover:bg-yellow-300 transition-colors uppercase tracking-wider"
-          >
-            Reservar
-          </a>
+          
+          <div className="flex items-center gap-2 sm:gap-3">
+            <a 
+              href={instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs font-bold bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Instagram className="w-3.5 h-3.5 text-yellow-400" />
+              <span className="hidden sm:inline">@joelbox_</span>
+            </a>
+            <a 
+              href="#catalogo" 
+              className="text-xs font-bold bg-yellow-400 text-black px-3 py-1.5 rounded-full hover:bg-yellow-300 transition-colors uppercase tracking-wider"
+            >
+              Reservar
+            </a>
+          </div>
         </div>
       </header>
 
       {/* HERO SECTION */}
-      <section className="relative px-4 pt-10 pb-12 text-center border-b border-zinc-900 bg-gradient-to-b from-zinc-950 to-black">
-        <div className="max-w-2xl mx-auto space-y-4">
+      <section className="relative px-4 pt-16 pb-20 text-center border-b border-zinc-900 overflow-hidden">
+        {/* Imagen de fondo con overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/E-576.jpg" 
+            alt="Joel el León en combate" 
+            className="w-full h-full object-cover object-top opacity-25 filter grayscale blur-[1px]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+        </div>
+
+        <div className="relative z-10 max-w-2xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
             <Zap className="w-3.5 h-3.5" />
             <span>OPERACIÓN SANTA CRUZ — BOLIVIA 2026</span>
@@ -104,8 +127,8 @@ export default function App() {
             CULTURA DE <span className="text-yellow-400">DISCIPLINA</span> Y RESILIENCIA
           </h1>
           
-          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
-            Indumentaria oficial de <strong className="text-white">@joelbox_</strong>. Cada reserva financia de manera directa la preparación y el viaje para la <strong className="text-white">Operación Santa Cruz 2026</strong> en Bolivia.
+          <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-xl mx-auto font-medium">
+            Indumentaria oficial de <strong className="text-white">Joel Frutos (@joelbox_)</strong>. Cada reserva financia directamente la preparación y el viaje de la <strong className="text-yellow-400">Operación Santa Cruz 2026</strong>.
           </p>
 
           <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
@@ -116,10 +139,10 @@ export default function App() {
               <ShoppingBag className="w-4 h-4" /> Ver Colección y Preventa
             </a>
             <a 
-              href="#sponsors" 
-              className="w-full sm:w-auto bg-zinc-900 hover:bg-zinc-800 text-zinc-200 font-bold px-6 py-3.5 rounded-xl border border-zinc-800 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+              href="#historia" 
+              className="w-full sm:w-auto bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 font-bold px-6 py-3.5 rounded-xl border border-zinc-700 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider backdrop-blur-md"
             >
-              <Award className="w-4 h-4 text-yellow-400" /> Ser Sponsor
+              <Flame className="w-4 h-4 text-yellow-400" /> Mi Historia
             </a>
           </div>
         </div>
@@ -211,8 +234,103 @@ export default function App() {
         </div>
       </section>
 
+      {/* SECCIÓN MI HISTORIA */}
+      <section id="historia" className="border-t border-zinc-900 bg-zinc-950/60 py-16 px-4">
+        <div className="max-w-4xl mx-auto space-y-10">
+          
+          <div className="text-center space-y-2">
+            <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Trayectoria & Filosofía</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">DETRÁS DEL GUANTE</h2>
+            <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto">
+              El boxeo no es solo lo que pasa arriba del cuadrilátero, es el trabajo silencioso de todos los días.
+            </p>
+          </div>
+
+          {/* Grid de Galería de Pelea */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800 group">
+              <img src="/E-524.jpg" alt="Joel arriba del ring" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+              <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">En el ring</span>
+            </div>
+
+            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800 group">
+              <img src="/E-543.jpg" alt="Joel en guardia" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+              <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">Foco y guardia</span>
+            </div>
+
+            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800 group">
+              <img src="/E-577.jpg" alt="Joel en el rincón" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+              <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">En el rincón</span>
+            </div>
+          </div>
+
+          {/* Galería Secundaria de Entrenamiento */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-800/80 group">
+              <img src="/20240203092340_IMG_2552.jpg" alt="Entrenamiento en la bolsa" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+              <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">Entrenamiento pesado</span>
+            </div>
+
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-800/80 group">
+              <img src="/20240203095134_IMG_2729.jpg" alt="Equipo de entrenamiento" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+              <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">El equipo — IMAD</span>
+            </div>
+          </div>
+
+          {/* Texto Biográfico */}
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 sm:p-8 space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center border-b border-zinc-800 pb-6">
+              <div>
+                <span className="block text-2xl font-black text-yellow-400">Peso Gallo</span>
+                <span className="text-[10px] text-zinc-400 uppercase font-bold">División</span>
+              </div>
+              <div>
+                <span className="block text-2xl font-black text-white">Ortodoxa</span>
+                <span className="text-[10px] text-zinc-400 uppercase font-bold">Guardia</span>
+              </div>
+              <div>
+                <span className="block text-2xl font-black text-yellow-400">25-10-1</span>
+                <span className="text-[10px] text-zinc-400 uppercase font-bold">Récord Amateur</span>
+              </div>
+              <div>
+                <span className="block text-2xl font-black text-white">El León</span>
+                <span className="text-[10px] text-zinc-400 uppercase font-bold">Apodo</span>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+              <p>
+                Soy <strong className="text-white">Joel Frutos ("El León")</strong>, boxeador amateur y profesor. Entreno día a día con una sola meta: superarme, representar a mi gimnasio y llevar la bandera lo más alto posible.
+              </p>
+              <p>
+                Hoy estoy enfocado en la <strong className="text-yellow-400">Operación Santa Cruz — Bolivia 2026</strong>. Lanzar esta marca e indumentaria es la herramienta que me permite financiar los viajes, la logística, los campamentos y todo lo que exige una preparación de alto rendimiento sin aflojar.
+              </p>
+            </div>
+
+            {/* CTA Redes en Historia */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-800">
+              <span className="text-xs font-bold text-zinc-400 uppercase text-center sm:text-left">Seguí el día a día del entrenamiento en Instagram:</span>
+              <a 
+                href={instagramUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-2.5 rounded-xl transition-all inline-flex items-center gap-2 text-xs uppercase tracking-wider shrink-0"
+              >
+                <Instagram className="w-4 h-4" /> Seguir a @joelbox_
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* COMUNIDAD PRIVADA */}
-      <section className="max-w-4xl mx-auto px-4 py-8">
+      <section className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-yellow-500/20 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center sm:text-left">
             <div className="inline-flex items-center gap-1.5 text-yellow-400 text-xs font-bold">
@@ -258,9 +376,9 @@ export default function App() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-zinc-900 py-8 px-4 text-center text-xs text-zinc-600">
-        <p className="font-bold text-zinc-400">EL LEÓN — JOEL FRUTOS (@joelbox_)</p>
-        <p className="mt-1">Santo Tomé / Rosario, Argentina • 2026</p>
+      <footer className="border-t border-zinc-900 py-8 px-4 text-center text-xs text-zinc-600 space-y-2">
+        <p className="font-bold text-zinc-400">EL LEÓN — JOEL DIAZ (@joelbox_)</p>
+        <p>Santo Tomé / Rosario, Argentina • 2026</p>
       </footer>
 
     </div>
