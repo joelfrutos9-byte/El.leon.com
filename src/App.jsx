@@ -5,6 +5,7 @@ export default function App() {
   const [selectedSize, setSelectedSize] = useState({});
   const whatsappNumber = "5493425236731";
   const instagramUrl = "https://instagram.com/joelbox_";
+  const whatsappChannelUrl = "Https://whatsapp.com/channel/0029Vb8f4EU3QxS1ckJsS31A";
 
   const products = [
     {
@@ -43,7 +44,7 @@ export default function App() {
       image: '/1785148947849.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Frisa invisible pesada premium. Capucha doble, puños reinforced y estampado de alto impacto en espalda.',
+      description: 'Frisa invisible pesada premium. Capucha doble, puños reforzados y estampado de alto impacto en espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     }
   ];
@@ -344,12 +345,12 @@ export default function App() {
             </p>
           </div>
           <a
-            href="https://chat.whatsapp.com/" 
+            href={whatsappChannelUrl} 
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider shrink-0"
           >
-            <MessageCircle className="w-4 h-4 fill-black" /> Unirme al Grupo WhatsApp
+            <MessageCircle className="w-4 h-4 fill-black" /> Unirme al Canal de WhatsApp
           </a>
         </div>
       </section>
