@@ -43,7 +43,7 @@ export default function App() {
       image: '/1785148947849.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Frisa invisible pesada premium. Capucha doble, puños reforzados y estampado de alto impacto en espalda.',
+      description: 'Frisa invisible pesada premium. Capucha doble, puños reinforced y estampado de alto impacto en espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     }
   ];
@@ -106,35 +106,36 @@ export default function App() {
       </header>
 
       {/* HERO SECTION */}
-      <section className="relative px-4 pt-16 pb-20 text-center border-b border-zinc-900 overflow-hidden">
-        {/* Imagen de fondo con overlay */}
+      <section className="relative min-h-[85vh] flex items-center justify-center px-4 py-16 text-center border-b border-zinc-900 overflow-hidden">
+        {/* Imagen de fondo completa */}
         <div className="absolute inset-0 z-0">
           <img 
             src="/E-576.jpg" 
             alt="Joel el León en combate" 
-            className="w-full h-full object-cover object-top opacity-25 filter grayscale blur-[1px]"
+            className="w-full h-full object-cover object-center opacity-45 filter grayscale brightness-90"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+          {/* Sombras suaves arriba y abajo para legibilidad del texto */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/80" />
         </div>
 
-        <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+        <div className="relative z-10 max-w-2xl mx-auto space-y-5 my-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/90 border border-emerald-500/40 text-emerald-400 text-xs font-bold backdrop-blur-sm">
             <Zap className="w-3.5 h-3.5" />
             <span>OPERACIÓN SANTA CRUZ — BOLIVIA 2026</span>
           </div>
           
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white uppercase">
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white uppercase drop-shadow-md">
             CULTURA DE <span className="text-yellow-400">DISCIPLINA</span> Y RESILIENCIA
           </h1>
           
-          <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-xl mx-auto font-medium">
+          <p className="text-zinc-200 text-sm sm:text-base leading-relaxed max-w-xl mx-auto font-medium drop-shadow-sm">
             Indumentaria oficial de <strong className="text-white">Joel Frutos (@joelbox_)</strong>. Cada reserva financia directamente la preparación y el viaje de la <strong className="text-yellow-400">Operación Santa Cruz 2026</strong>.
           </p>
 
-          <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="pt-3 flex flex-col sm:flex-row gap-3 justify-center">
             <a 
               href="#catalogo" 
-              className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-300 text-black font-black px-6 py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider shadow-lg shadow-yellow-500/10"
+              className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-300 text-black font-black px-6 py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider shadow-lg shadow-yellow-500/20"
             >
               <ShoppingBag className="w-4 h-4" /> Ver Colección y Preventa
             </a>
@@ -249,7 +250,7 @@ export default function App() {
           {/* Grid de Galería de Pelea */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800 group">
-              <img src="/E-524.jpg" alt="Joel arriba del ring" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img src="/E-577.jpg" alt="Joel arriba del ring" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
               <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">En el ring</span>
             </div>
@@ -261,7 +262,7 @@ export default function App() {
             </div>
 
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800 group">
-              <img src="/E-577.jpg" alt="Joel en el rincón" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img src="/E-524.jpg" alt="Joel en el rincón" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
               <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">En el rincón</span>
             </div>
