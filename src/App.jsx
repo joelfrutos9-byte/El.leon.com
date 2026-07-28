@@ -9,9 +9,7 @@ import {
   Flame, 
   Newspaper, 
   Tv, 
-  Home,
-  ChevronRight,
-  ShieldAlert
+  Home
 } from 'lucide-react';
 
 export default function App() {
@@ -60,7 +58,7 @@ export default function App() {
       image: '/1785148947849.png',
       badge: 'PREVENTA',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Buzo pesados con capucha doble, puños reforzados y estampado de alto impacto en la espalda.',
+      description: 'Buzo pesado con capucha doble, puños reforzados y estampado de alto impacto en la espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     }
   ];
@@ -174,7 +172,7 @@ export default function App() {
 
         {/* 1. VISTA: MISIÓN BOLIVIA (INICIO) */}
         {activeTab === 'mision' && (
-          <div className="space-y-8 animate-fade-in">
+          <div className="space-y-8">
             {/* HERO PRINCIPAL */}
             <section className="relative rounded-3xl overflow-hidden border border-zinc-800 p-6 sm:p-12 text-center bg-zinc-950">
               <div className="absolute inset-0 z-0">
@@ -284,7 +282,7 @@ export default function App() {
 
         {/* 2. VISTA: LEÓN STORE / TIENDA */}
         {activeTab === 'tienda' && (
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-6">
             <div className="text-center sm:text-left">
               <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Indumentaria Oficial</span>
               <h2 className="text-2xl sm:text-3xl font-black text-white uppercase">LEÓN STORE</h2>
@@ -367,7 +365,7 @@ export default function App() {
 
         {/* 3. VISTA: EL CAMINO / HISTORIA */}
         {activeTab === 'elcamino' && (
-          <div className="space-y-8 animate-fade-in">
+          <div className="space-y-8">
             <div className="text-center space-y-2">
               <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Trayectoria & Filosofía</span>
               <h2 className="text-3xl font-black text-white uppercase tracking-tight">DETRÁS DEL GUANTE</h2>
@@ -378,19 +376,19 @@ export default function App() {
 
             {/* Grid de Galería de Pelea */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800 group">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800">
                 <img src="/E-577.jpg" alt="Joel arriba del ring" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
                 <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">En el ring</span>
               </div>
 
-              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800 group">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800">
                 <img src="/E-543.jpg" alt="Joel en guardia" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
                 <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">Foco y guardia</span>
               </div>
 
-              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800 group">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800">
                 <img src="/E-524.jpg" alt="Joel en el rincón" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
                 <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">En el rincón</span>
@@ -399,13 +397,13 @@ export default function App() {
 
             {/* Galería Secundaria de Entrenamiento */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-800 group">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-800">
                 <img src="/20240203092340_IMG_2552.jpg" alt="Entrenamiento en la bolsa" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
                 <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">Entrenamiento pesado</span>
               </div>
 
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-800 group">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-800">
                 <img src="/20240203095134_IMG_2729.jpg" alt="Equipo IMAD" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
                 <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">El equipo — IMAD</span>
@@ -434,7 +432,7 @@ export default function App() {
               </div>
 
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed text-center">
-                Soy <strong>Joel Frutos ("El León")</strong>, boxeador amateur y profesor. Entreno día a día con una sola meta: superarme, representar a mi gimnasio y llevar la bandera lo más alto posible en la <strong>Operación Santa Cruz — Bolivia 2026</strong>.
+                Soy <strong>Joel Diaz ("El León")</strong>, boxeador amateur y profesor. Entreno día a día con una sola meta: superarme, representar a mi gimnasio y llevar la bandera lo más alto posible en la <strong>Operación Santa Cruz — Bolivia 2026</strong>.
               </p>
             </div>
           </div>
@@ -442,7 +440,7 @@ export default function App() {
 
         {/* 4. VISTA: NOTICIAS & LA MANADA */}
         {activeTab === 'noticias' && (
-          <div className="space-y-8 animate-fade-in max-w-3xl mx-auto">
+          <div className="space-y-8 max-w-3xl mx-auto">
             <div className="text-center space-y-2">
               <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Medio Oficial</span>
               <h2 className="text-3xl font-black text-white uppercase">📰 NOTICIAS DE EL LEÓN</h2>
@@ -482,7 +480,7 @@ export default function App() {
 
         {/* 5. VISTA: SPONSORS */}
         {activeTab === 'sponsors' && (
-          <div className="animate-fade-in max-w-2xl mx-auto py-6">
+          <div className="max-w-2xl mx-auto py-6">
             <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 text-center space-y-4">
               <div className="inline-flex items-center gap-2 text-yellow-400 bg-yellow-500/10 px-3 py-1 rounded-full text-xs font-bold border border-yellow-500/20">
                 <Award className="w-4 h-4" />
@@ -508,10 +506,10 @@ export default function App() {
 
       {/* FOOTER */}
       <footer className="border-t border-zinc-900 py-8 px-4 text-center text-xs text-zinc-600 space-y-2 mt-12">
-        <p className="font-bold text-zinc-400">EL LEÓN — JOEL FRUTOS (@joelbox_)</p>
+        <p className="font-bold text-zinc-400">EL LEÓN — JOEL DIAZ (@joelbox_)</p>
         <p>Santo Tomé / Rosario, Argentina • 2026</p>
       </footer>
 
     </div>
   );
-              }
+        }
