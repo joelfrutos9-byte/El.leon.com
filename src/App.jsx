@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { ShoppingBag, ShieldCheck, Zap, MessageCircle, Users, Award, Instagram, Flame, Dumbbell, Target } from 'lucide-react';
 
+// Importación de los nuevos módulos de datos/componentes
+import { HoyEnElUniverso } from './components/HoyEnElUniverso';
+import { TableroMision } from './components/TableroMision';
+
 export default function App() {
   const [selectedSize, setSelectedSize] = useState({});
   const whatsappNumber = "5493425236731";
@@ -149,6 +153,12 @@ export default function App() {
           </div>
         </div>
       </section>
+
+      {/* BLOQUE NUEVO 1: ACTUALIDAD EN TIEMPO REAL */}
+      <HoyEnElUniverso />
+
+      {/* BLOQUE NUEVO 2: TABLERO DE LA MISIÓN CON PROGRESO */}
+      <TableroMision recaudado={0} objetivo={2600000} />
 
       {/* CATALOGO */}
       <section id="catalogo" className="max-w-4xl mx-auto px-4 py-12">
