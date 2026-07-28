@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
   Zap, 
@@ -15,10 +15,35 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState('mision');
   const [selectedSize, setSelectedSize] = useState({});
+  const [noticiasCms, setNoticiasCms] = useState([]);
+  const [cargandoNoticias, setCargandoNoticias] = useState(true);
 
   const whatsappNumber = "5493425236731";
   const instagramUrl = "https://instagram.com/joelbox_";
   const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb8f4EU3QxS1ckJsS31A";
+
+  // Configuración de Sanity (Project ID: 837br3mo)
+  const SANITY_PROJECT_ID = '837br3mo';
+  const SANITY_DATASET = 'production';
+
+  // Consulta automática a Sanity para obtener noticias publicadas
+  useEffect(() => {
+    const query = encodeURIComponent('*[_type == "noticia"] | order(_createdAt desc)');
+    const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${query}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data.result && data.result.length > 0) {
+          setNoticiasCms(data.result);
+        }
+        setCargandoNoticias(false);
+      })
+      .catch(err => {
+        console.log("Consulta de noticias Sanity:", err);
+        setCargandoNoticias(false);
+      });
+  }, []);
 
   // Catálogo de Productos
   const products = [
@@ -58,7 +83,7 @@ export default function App() {
       image: '/1785148947849.png',
       badge: 'PREVENTA',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Buzo pesado con capucha doble, puños reforzados y estampado de alto impacto en la espalda.',
+      description: 'Buzo pesado con capucha doble, puños reinforced y estampado de alto impacto en la espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     }
   ];
@@ -173,7 +198,6 @@ export default function App() {
         {/* 1. VISTA: MISIÓN BOLIVIA (INICIO) */}
         {activeTab === 'mision' && (
           <div className="space-y-8">
-            {/* HERO PRINCIPAL */}
             <section className="relative rounded-3xl overflow-hidden border border-zinc-800 p-6 sm:p-12 text-center bg-zinc-950">
               <div className="absolute inset-0 z-0">
                 <img src="/E-576.jpg" alt="Joel el León en combate" className="w-full h-full object-cover object-center opacity-30 filter grayscale" />
@@ -229,7 +253,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Barra de Progreso */}
               <div className="w-full bg-zinc-900 h-4 rounded-full overflow-hidden p-0.5 border border-zinc-800">
                 <div 
                   className="bg-gradient-to-r from-yellow-500 to-yellow-300 h-full rounded-full transition-all duration-700"
@@ -237,7 +260,6 @@ export default function App() {
                 />
               </div>
 
-              {/* Bloque Transparencia */}
               <div className="pt-3 border-t border-zinc-900 text-xs text-zinc-400 space-y-1">
                 <span className="font-bold text-yellow-400 uppercase text-[11px] block">💡 Tu compra impulsa el viaje</span>
                 <p className="leading-relaxed">
@@ -374,7 +396,6 @@ export default function App() {
               </p>
             </div>
 
-            {/* Grid de Galería de Pelea */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800">
                 <img src="/E-577.jpg" alt="Joel arriba del ring" className="w-full h-full object-cover" />
@@ -395,7 +416,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Galería Secundaria de Entrenamiento */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-800">
                 <img src="/20240203092340_IMG_2552.jpg" alt="Entrenamiento en la bolsa" className="w-full h-full object-cover" />
@@ -410,7 +430,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Ficha Técnica */}
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 sm:p-8 space-y-6">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center border-b border-zinc-800 pb-6">
                 <div>
@@ -438,7 +457,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. VISTA: NOTICIAS & LA MANADA */}
+        {/* 4. VISTA: NOTICIAS & LA MANADA (CONECTADO A SANITY CMS) */}
         {activeTab === 'noticias' && (
           <div className="space-y-8 max-w-3xl mx-auto">
             <div className="text-center space-y-2">
@@ -446,14 +465,36 @@ export default function App() {
               <h2 className="text-3xl font-black text-white uppercase">📰 NOTICIAS DE EL LEÓN</h2>
             </div>
 
-            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2 py-0.5 rounded">
-                OFICIAL
-              </span>
-              <h3 className="text-xl font-black text-white uppercase">Lanzamiento Oficial de la Preventa Bolivia 2026</h3>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                Apertura oficial del catálogo de indumentaria para cubrir el margen de pasajes y logística del próximo campamento. Las reservas se realizan directamente vía WhatsApp con seña del 50%.
-              </p>
+            {/* Renderizado de Noticias desde Sanity o noticia por defecto */}
+            <div className="space-y-4">
+              {cargandoNoticias ? (
+                <div className="text-center text-xs text-zinc-500 py-4 font-mono">Cargando noticias...</div>
+              ) : noticiasCms.length > 0 ? (
+                noticiasCms.map((n, idx) => (
+                  <div key={n._id || idx} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2 py-0.5 rounded uppercase">
+                      {n.categoria || 'OFICIAL'}
+                    </span>
+                    <h3 className="text-xl font-black text-white uppercase">{n.titulo}</h3>
+                    {n.resumen && <p className="text-xs text-zinc-300 leading-relaxed">{n.resumen}</p>}
+                    {n.videoUrl && (
+                      <a href={n.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-xs font-bold text-yellow-400 underline mt-2">
+                        Ver Video / Cobertura →
+                      </a>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2 py-0.5 rounded">
+                    OFICIAL
+                  </span>
+                  <h3 className="text-xl font-black text-white uppercase">Lanzamiento Oficial de la Preventa Bolivia 2026</h3>
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    Apertura oficial del catálogo de indumentaria para cubrir el margen de pasajes y logística del próximo campamento. Las reservas se realizan directamente vía WhatsApp con seña del 50%.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* COMUNIDAD LA MANADA */}
@@ -512,4 +553,4 @@ export default function App() {
 
     </div>
   );
-        }
+                                }
