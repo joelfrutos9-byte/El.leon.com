@@ -1,25 +1,22 @@
 {
-  "name": "EL LEÓN - Sitio Oficial",
-  "short_name": "EL LEÓN",
-  "description": "El Universo Digital de EL LEÓN",
-  "theme_color": "#ffde00",
-  "background_color": "#000000",
-  "display": "standalone",
-  "orientation": "portrait",
-  "scope": "/",
+  "name": "El León - Joel Díaz",
+  "short_name": "El León",
+  "description": "App oficial de Joel Diaz - Boxeador",
   "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/pwa-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/pwa-512x512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
