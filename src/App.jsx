@@ -6,10 +6,8 @@ import {
   Users, 
   Award, 
   Instagram, 
-  Flame, 
   Newspaper, 
   Tv, 
-  Home,
   Trophy,
   UserCheck,
   History,
@@ -20,10 +18,7 @@ import {
   Menu,
   X,
   ChevronRight,
-  ShieldCheck,
   Dumbbell,
-  PackageCheck,
-  Calendar,
   Layers,
   Sparkles,
   Lock,
@@ -47,6 +42,9 @@ export default function App() {
   const [unlockedPosts, setUnlockedPosts] = useState({});
   const [inputPasswords, setInputPasswords] = useState({});
 
+  // Truco secreto para abrir el panel de Admin (3 clicks en el Logo "EL LEÓN")
+  const [logoClicks, setLogoClicks] = useState(0);
+
   const whatsappNumber = "5493425236731";
   const instagramUrl = "https://instagram.com/joelbox_";
   const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb8f4EU3QxS1ckJsS31A";
@@ -55,6 +53,12 @@ export default function App() {
   const SANITY_DATASET = 'production';
 
   useEffect(() => {
+    // Detectar si se entra con URL secreta ?admin=true
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('admin') === 'true') {
+      setActiveTab('admin');
+    }
+
     // Cargar noticias desde Sanity
     const query = encodeURIComponent('*[_type in ["noticia", "post"]] | order(_createdAt desc)');
     const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${query}`;
@@ -102,7 +106,21 @@ export default function App() {
     }
   };
 
-  // Menú público sin botones llamativos de administración
+  // Función secreta: Tocás 3 veces seguidas el logo EL LEÓN y te abre el Panel
+  const handleLogoClick = () => {
+    const newCount = logoClicks + 1;
+    setLogoClicks(newCount);
+
+    if (newCount >= 3) {
+      setActiveTab('admin');
+      setLogoClicks(0);
+    } else {
+      // Volver a 0 si no completa 3 clicks rápido
+      setTimeout(() => setLogoClicks(0), 3000);
+    }
+  };
+
+  // MENÚ 100% PÚBLICO (No existe la palabra Creador, Panel ni Admin)
   const menuItems = [
     { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
     { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
@@ -115,8 +133,7 @@ export default function App() {
     { id: 'financiacion', label: 'El León se Financia', sub: 'Hub de Autogestión', icon: DollarSign },
     { id: 'aliados', label: 'Aliados', sub: 'Marcas & Sponsors', icon: Award },
     { id: 'lamanada', label: 'La Manada', sub: 'Comunidad WhatsApp', icon: Users },
-    { id: 'archivo', label: 'El Archivo', sub: 'Memoria Histórica', icon: Layers },
-    { id: 'admin', label: 'Acceso Creador', sub: 'Gestión Privada (PIN)', icon: Lock, badge: 'PRIVADO' }
+    { id: 'archivo', label: 'El Archivo', sub: 'Memoria Histórica', icon: Layers }
   ];
 
   // Productos León Store
@@ -160,7 +177,7 @@ export default function App() {
       image: '/1785148947849.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Buzo pesado con capucha doble, puños reforzados y estampado táctico de alto impacto en espalda.',
+      description: 'Buzo pesado con capucha doble, puños reinforced y estampado táctico de alto impacto en espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     },
     {
@@ -299,8 +316,12 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           
-          {/* LOGO EL LEÓN */}
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => handleSelectTab('mision')}>
+          {/* LOGO EL LEÓN (TOCAR 3 VECES SEGUIDAS ABRE EL PANEL CREADOR) */}
+          <div 
+            className="flex items-center gap-2.5 cursor-pointer select-none" 
+            onClick={handleLogoClick}
+            title="El León Boxeo"
+          >
             <span className="text-xl font-black tracking-tighter text-yellow-400">EL LEÓN</span>
             <span className="text-[10px] bg-yellow-500/10 text-yellow-400 font-bold px-2 py-0.5 rounded border border-yellow-500/20 uppercase tracking-widest hidden sm:inline">
               UNIVERSO DIGITAL
@@ -330,7 +351,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* TABS SUPERIORES RÁPIDAS (Solo las principales públicas) */}
+        {/* TABS SUPERIORES RÁPIDAS */}
         <div className="max-w-6xl mx-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {menuItems.slice(0, 5).map(item => {
             const IconComponent = item.icon;
@@ -424,7 +445,9 @@ export default function App() {
         <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-zinc-400">
           <div className="flex items-center gap-2">
             <span className="text-zinc-600">Sección:</span>
-            <span className="font-bold text-yellow-400 uppercase tracking-wider">{activeTabMeta.label}</span>
+            <span className="font-bold text-yellow-400 uppercase tracking-wider">
+              {activeTab === 'admin' ? 'PANEL CREADOR' : activeTabMeta.label}
+            </span>
           </div>
           <span className="text-[10px] bg-zinc-900 px-2 py-0.5 rounded text-zinc-400 font-mono hidden sm:inline">
             UNIVERSO DIGITAL / 2026
@@ -520,7 +543,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. VISTA: CLASES & RUTINAS (PÚBLICA Y LIMPIA) */}
+        {/* 2. VISTA: CLASES & RUTINAS (PÚBLICA) */}
         {activeTab === 'clases' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -614,7 +637,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. VISTA: PANEL CREADOR (ACCESO PROTEGIDO CON PIN 0811) */}
+        {/* 3. VISTA: PANEL CREADOR SECRETO (ACCESO CON 3 CLICKS EN EL LOGO + PIN 0811) */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
             <Admin />
@@ -1031,4 +1054,4 @@ export default function App() {
 
     </div>
   );
-      }
+  }
