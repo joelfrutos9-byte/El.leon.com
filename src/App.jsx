@@ -102,7 +102,7 @@ export default function App() {
     }
   };
 
-  // Menú público sin botón llamativo de admin (se deja una opción discreta)
+  // Menú público sin botones llamativos de administración
   const menuItems = [
     { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
     { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
@@ -160,7 +160,7 @@ export default function App() {
       image: '/1785148947849.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Buzo pesado con capucha doble, puños reinforced y estampado táctico de alto impacto en espalda.',
+      description: 'Buzo pesado con capucha doble, puños reforzados y estampado táctico de alto impacto en espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     },
     {
@@ -1031,4 +1031,4 @@ export default function App() {
 
     </div>
   );
-          }
+      }
