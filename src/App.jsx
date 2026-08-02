@@ -26,7 +26,10 @@ import {
   FileText,
   Send,
   Target,
-  Activity
+  Activity,
+  Key,
+  CheckCircle2,
+  Search
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
@@ -42,8 +45,13 @@ export default function App() {
   // Estados para Clases / Contenido dinámico de Supabase
   const [posts, setPosts] = useState([]);
   const [cargandoPosts, setCargandoPosts] = useState(true);
-  const [unlockedPosts, setUnlockedPosts] = useState({});
-  const [inputPasswords, setInputPasswords] = useState({});
+
+  // Portal de Alumno Privado por Clave
+  const [studentKey, setStudentKey] = useState('');
+  const [activeStudentKey, setActiveStudentKey] = useState('');
+  const [studentPosts, setStudentPosts] = useState([]);
+  const [searchingStudent, setSearchingStudent] = useState(false);
+  const [studentSearched, setStudentSearched] = useState(false);
 
   // Estado para desplegar el formulario de rutina personalizada
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -92,33 +100,52 @@ export default function App() {
         setCargandoNoticias(false);
       });
 
-    // Cargar posts / clases desde Supabase
-    fetchSupabasePosts();
+    // Cargar sólo posts públicos de Supabase para el catálogo general
+    fetchPublicPosts();
   }, []);
 
-  const fetchSupabasePosts = async () => {
+  const fetchPublicPosts = async () => {
     try {
       setCargandoPosts(true);
       const { data, error } = await supabase
         .from('posts')
         .select('*')
+        .eq('access_type', 'public')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setPosts(data || []);
     } catch (err) {
-      console.log("Error cargando contenidos de Supabase:", err.message);
+      console.log("Error cargando contenidos públicos:", err.message);
     } finally {
       setCargandoPosts(false);
     }
   };
 
-  const handleUnlockPost = (postId, correctPassword) => {
-    const entered = inputPasswords[postId] || '';
-    if (entered.trim() === correctPassword.trim()) {
-      setUnlockedPosts(prev => ({ ...prev, [postId]: true }));
-    } else {
-      alert('Contraseña incorrecta para esta clase.');
+  // Buscar contenido privado por Clave de Alumno
+  const handleSearchStudentKey = async (e) => {
+    e.preventDefault();
+    if (!studentKey.trim()) return;
+
+    try {
+      setSearchingStudent(true);
+      setStudentSearched(true);
+      const cleanKey = studentKey.trim().toLowerCase();
+      setActiveStudentKey(cleanKey);
+
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('password', cleanKey)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setStudentPosts(data || []);
+    } catch (err) {
+      console.log("Error buscando rutina de alumno:", err.message);
+      setStudentPosts([]);
+    } finally {
+      setSearchingStudent(false);
     }
   };
 
@@ -302,7 +329,7 @@ export default function App() {
     setActiveTab(id);
     setMobileMenuOpen(false);
     if (id === 'clases') {
-      fetchSupabasePosts();
+      fetchPublicPosts();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -565,7 +592,7 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-zinc-900">
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">1. Producción Textil</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre estrictamente el costo de confección.</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre strictly el costo de confección.</p>
                 </div>
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">2. Logística & Traslado</span>
@@ -580,15 +607,94 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. VISTA: CLASES & RUTINAS (+ FORMULARIO DE DIAGNÓSTICO A WHATSAPP) */}
+        {/* 2. VISTA: CLASES & RUTINAS (+ PORTAL DE ALUMNO PRIVADO + FORMULARIO DE EVALUACIÓN) */}
         {activeTab === 'clases' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
               <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Centro de Entrenamiento</span>
               <h2 className="text-3xl font-black text-white uppercase tracking-tight">CLASES & RUTINAS</h2>
               <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                Accedé a los videos de técnica o pedí un plan de entrenamiento 100% a tu medida.
+                Ingresá con tu Clave de Alumno para ver tus planes privados o pedí tu rutina a medida.
               </p>
+            </div>
+
+            {/* BUSCADOR PRIVADO DE ALUMNO */}
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-yellow-400" />
+                <h3 className="text-xl font-black text-white uppercase">Acceso Alumnos — Tu Clave Personal</h3>
+              </div>
+              <p className="text-xs text-zinc-400">
+                Si Joel te asignó una rutina, ingresá la clave que te dio por WhatsApp para acceder a tu plan exclusivo:
+              </p>
+
+              <form onSubmit={handleSearchStudentKey} className="flex gap-2 max-w-md">
+                <input
+                  type="text"
+                  placeholder="Ej: marcos2026, juan-box"
+                  value={studentKey}
+                  onChange={(e) => setStudentKey(e.target.value)}
+                  className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                />
+                <button
+                  type="submit"
+                  disabled={searchingStudent}
+                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                >
+                  <Search className="w-4 h-4" />
+                  {searchingStudent ? 'Buscando...' : 'Ingresar'}
+                </button>
+              </form>
+
+              {/* RESULTADO DE BÚSQUEDA DE ALUMNO */}
+              {studentSearched && (
+                <div className="pt-4 border-t border-zinc-900 animate-fade-in">
+                  {studentPosts.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>¡Rutina encontrada para la clave "{activeStudentKey}"!</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        {studentPosts.map((post) => (
+                          <div key={post.id} className="bg-zinc-900/90 border border-yellow-500/50 rounded-2xl p-5 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-400 text-black px-2.5 py-0.5 rounded">
+                                {post.category}
+                              </span>
+                              <span className="text-[10px] font-bold text-yellow-400 flex items-center gap-1">
+                                <Lock className="w-3 h-3" /> Plan Exclusivo
+                              </span>
+                            </div>
+
+                            <h4 className="text-lg font-black text-white uppercase">{post.title}</h4>
+
+                            {post.description && (
+                              <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line bg-black/50 p-4 rounded-xl border border-zinc-800">
+                                {post.description}
+                              </p>
+                            )}
+
+                            <a
+                              href={post.video_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 bg-yellow-400 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase"
+                            >
+                              <PlayCircle className="w-4 h-4" /> Ver Video de la Rutina
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-red-400 bg-red-950/40 border border-red-800/50 p-4 rounded-xl">
+                      No encontramos ninguna rutina activa asignada a la clave <strong>"{activeStudentKey}"</strong>. Verificá que la estés escribiendo exactamente como te la dio Joel.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* SECCIÓN DESTACADA: PEDIR RUTINA PERSONALIZADA */}
@@ -598,9 +704,9 @@ export default function App() {
                   <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
                     <Target className="w-3.5 h-3.5" /> PLANES A MEDIDA
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-black text-white uppercase">¿Querés una Rutina Personalizada?</h3>
+                  <h3 className="text-xl sm:text-2xl font-black text-white uppercase">¿No tenés clave todavía? Pedí tu Plan</h3>
                   <p className="text-xs text-zinc-400 max-w-lg">
-                    Completá tu ficha de evaluación física para que analice tus objetivos y te arme una rutina adaptada a tus tiempos y nivel.
+                    Completá tu ficha de evaluación física para que analice tus objetivos y te arme una rutina personalizada con tu propia clave.
                   </p>
                 </div>
 
@@ -735,94 +841,47 @@ export default function App() {
               )}
             </div>
 
-            {/* LISTA DE RUTINAS / VIDEOS DESDE SUPABASE */}
-            <div className="space-y-4 pt-4">
-              <h3 className="text-xl font-black text-white uppercase flex items-center gap-2">
-                <Activity className="w-5 h-5 text-yellow-400" />
-                Catálogo de Clases & Contenidos
-              </h3>
+            {/* CATALOGO PÚBLICO GENERAL */}
+            {posts.length > 0 && (
+              <div className="space-y-4 pt-4">
+                <h3 className="text-xl font-black text-white uppercase flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-yellow-400" />
+                  Clases Abiertas de Muestra
+                </h3>
 
-              {cargandoPosts ? (
-                <div className="text-center text-xs text-zinc-500 py-12 font-mono">
-                  Cargando entrenamientos...
-                </div>
-              ) : posts.length === 0 ? (
-                <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
-                  <Sparkles className="w-8 h-8 text-yellow-400 mx-auto" />
-                  <h3 className="text-lg font-black text-white uppercase">Próximamente nuevos contenidos</h3>
-                  <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                    Estamos preparando rutinas abiertas, clases técnicas de boxeo y material audiovisual exclusivo. ¡Atentos a las próximas publicaciones!
-                  </p>
-                </div>
-              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {posts.map((post) => {
-                    const isPrivate = post.access_type === 'private';
-                    const isUnlocked = unlockedPosts[post.id];
+                  {posts.map((post) => (
+                    <div 
+                      key={post.id}
+                      className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all"
+                    >
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
+                          {post.category}
+                        </span>
 
-                    return (
-                      <div 
-                        key={post.id}
-                        className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all"
-                      >
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-start gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
-                              {post.category}
-                            </span>
-                            {isPrivate && (
-                              <span className="flex items-center gap-1 text-[11px] font-bold text-yellow-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                                <Lock className="w-3 h-3 text-yellow-400" /> EXCLUSIVO
-                              </span>
-                            )}
-                          </div>
+                        <h3 className="text-lg font-black text-white uppercase leading-tight">{post.title}</h3>
 
-                          <h3 className="text-lg font-black text-white uppercase leading-tight">{post.title}</h3>
-
-                          {post.description && (
-                            <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
-                              {post.description}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Lógica de desbloqueo si es privado */}
-                        {isPrivate && !isUnlocked ? (
-                          <div className="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl text-center space-y-2 mt-2">
-                            <Lock className="w-6 h-6 text-yellow-400 mx-auto" />
-                            <p className="text-[11px] text-zinc-400">Ingresá la clave de alumno para desbloquear este video:</p>
-                            <div className="flex gap-2 max-w-xs mx-auto">
-                              <input
-                                type="password"
-                                placeholder="Contraseña"
-                                value={inputPasswords[post.id] || ''}
-                                onChange={(e) => setInputPasswords({ ...inputPasswords, [post.id]: e.target.value })}
-                                className="flex-1 bg-black border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                              />
-                              <button
-                                onClick={() => handleUnlockPost(post.id, post.password)}
-                                className="bg-yellow-400 text-black font-black px-4 py-1.5 rounded-lg text-xs uppercase"
-                              >
-                                Ver
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <a
-                            href={post.video_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
-                          >
-                            <PlayCircle className="w-4 h-4" /> Abrir Video / Entrenar
-                          </a>
+                        {post.description && (
+                          <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
+                            {post.description}
+                          </p>
                         )}
                       </div>
-                    );
-                  })}
+
+                      <a
+                        href={post.video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+                      >
+                        <PlayCircle className="w-4 h-4" /> Ver Clase
+                      </a>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1243,4 +1302,4 @@ export default function App() {
 
     </div>
   );
-                }
+      }
