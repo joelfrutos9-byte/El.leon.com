@@ -23,7 +23,10 @@ import {
   Sparkles,
   Lock,
   PlayCircle,
-  Shield
+  FileText,
+  Send,
+  Target,
+  Activity
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
@@ -41,6 +44,19 @@ export default function App() {
   const [cargandoPosts, setCargandoPosts] = useState(true);
   const [unlockedPosts, setUnlockedPosts] = useState({});
   const [inputPasswords, setInputPasswords] = useState({});
+
+  // Estado para desplegar el formulario de rutina personalizada
+  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [formData, setFormData] = useState({
+    nombre: '',
+    edad: '',
+    ciudad: '',
+    objetivo: 'Aprender Boxeo y Técnica',
+    nivel: 'Principiante (Desde cero)',
+    diasDisponibles: '3 días por semana',
+    lugar: 'En gimnasio',
+    lesiones: 'Ninguna'
+  });
 
   // Truco secreto para abrir el panel de Admin (3 clicks en el Logo "EL LEÓN")
   const [logoClicks, setLogoClicks] = useState(0);
@@ -115,12 +131,33 @@ export default function App() {
       setActiveTab('admin');
       setLogoClicks(0);
     } else {
-      // Volver a 0 si no completa 3 clicks rápido
       setTimeout(() => setLogoClicks(0), 3000);
     }
   };
 
-  // MENÚ 100% PÚBLICO (No existe la palabra Creador, Panel ni Admin)
+  // Envío del Formulario de Rutina Personalizada a WhatsApp
+  const handleSendCustomForm = (e) => {
+    e.preventDefault();
+    if (!formData.nombre.trim() || !formData.edad.trim()) {
+      alert('Por favor completá tu nombre y edad.');
+      return;
+    }
+
+    const msg = `🥊 *FICHA DE EVALUACIÓN — RUTINA PERSONALIZADA* 🥊\n\n` +
+      `👤 *Nombre:* ${formData.nombre}\n` +
+      `🎂 *Edad:* ${formData.edad} años\n` +
+      `📍 *Ciudad:* ${formData.ciudad || 'No especificada'}\n\n` +
+      `🎯 *Objetivo Principal:* ${formData.objetivo}\n` +
+      `📊 *Nivel de Experiencia:* ${formData.nivel}\n` +
+      `📅 *Disponibilidad:* ${formData.diasDisponibles}\n` +
+      `🏋️ *Lugar de Entrenamiento:* ${formData.lugar}\n` +
+      `⚠️ *Lesiones/Molestias:* ${formData.lesiones}\n\n` +
+      `¡Hola Joel! Te envío mi ficha completada desde la App para consultar por mi plan personalizado.`;
+
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  // MENÚ 100% PÚBLICO
   const menuItems = [
     { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
     { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
@@ -316,7 +353,7 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           
-          {/* LOGO EL LEÓN (TOCAR 3 VECES SEGUIDAS ABRE EL PANEL CREADOR) */}
+          {/* LOGO EL LEÓN (3 CLICKS SEGUIDOS PARA MODO ADMIN) */}
           <div 
             className="flex items-center gap-2.5 cursor-pointer select-none" 
             onClick={handleLogoClick}
@@ -543,97 +580,249 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. VISTA: CLASES & RUTINAS (PÚBLICA) */}
+        {/* 2. VISTA: CLASES & RUTINAS (+ FORMULARIO DE DIAGNÓSTICO A WHATSAPP) */}
         {activeTab === 'clases' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
               <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Centro de Entrenamiento</span>
               <h2 className="text-3xl font-black text-white uppercase tracking-tight">CLASES & RUTINAS</h2>
               <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                Accedé a los videos de técnica, entrenamientos y material exclusivo.
+                Accedé a los videos de técnica o pedí un plan de entrenamiento 100% a tu medida.
               </p>
             </div>
 
-            {cargandoPosts ? (
-              <div className="text-center text-xs text-zinc-500 py-12 font-mono">
-                Cargando entrenamientos...
-              </div>
-            ) : posts.length === 0 ? (
-              <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
-                <Sparkles className="w-8 h-8 text-yellow-400 mx-auto" />
-                <h3 className="text-lg font-black text-white uppercase">Próximamente nuevos contenidos</h3>
-                <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                  Estamos preparando rutinas, clases técnicas de boxeo y material audiovisual exclusivo. ¡Atentos a las próximas publicaciones!
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {posts.map((post) => {
-                  const isPrivate = post.access_type === 'private';
-                  const isUnlocked = unlockedPosts[post.id];
+            {/* SECCIÓN DESTACADA: PEDIR RUTINA PERSONALIZADA */}
+            <div className="bg-gradient-to-br from-zinc-900 via-zinc-950 to-black border border-yellow-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
+                    <Target className="w-3.5 h-3.5" /> PLANES A MEDIDA
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-black text-white uppercase">¿Querés una Rutina Personalizada?</h3>
+                  <p className="text-xs text-zinc-400 max-w-lg">
+                    Completá tu ficha de evaluación física para que analice tus objetivos y te arme una rutina adaptada a tus tiempos y nivel.
+                  </p>
+                </div>
 
-                  return (
-                    <div 
-                      key={post.id}
-                      className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-start gap-2">
-                          <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
-                            {post.category}
-                          </span>
-                          {isPrivate && (
-                            <span className="flex items-center gap-1 text-[11px] font-bold text-yellow-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                              <Lock className="w-3 h-3 text-yellow-400" /> EXCLUSIVO
+                <button
+                  onClick={() => setShowCustomForm(!showCustomForm)}
+                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 transition-all whitespace-nowrap self-stretch sm:self-auto justify-center"
+                >
+                  <FileText className="w-4 h-4" />
+                  {showCustomForm ? 'Cerrar Ficha' : 'Completar Ficha'}
+                </button>
+              </div>
+
+              {/* FORMULARIO DESPLEGABLE */}
+              {showCustomForm && (
+                <form onSubmit={handleSendCustomForm} className="pt-6 border-t border-zinc-800 space-y-4 animate-fade-in">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Tu Nombre *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: Marcos Pérez"
+                        value={formData.nombre}
+                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Edad *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="Ej: 24"
+                        value={formData.edad}
+                        onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Ciudad / Localidad</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Santo Tomé"
+                        value={formData.ciudad}
+                        onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Objetivo Principal *</label>
+                      <select
+                        value={formData.objetivo}
+                        onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="Aprender Boxeo y Técnica">Aprender Boxeo y Técnica</option>
+                        <option value="Bajar de peso y quemar grasa">Bajar de peso y quemar grasa</option>
+                        <option value="Ganar masa muscular y fuerza">Ganar masa muscular y fuerza</option>
+                        <option value="Preparación Física para Combate">Preparación Física para Combate</option>
+                        <option value="Acondicionamiento físico general">Acondicionamiento físico general</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Nivel de Experiencia *</label>
+                      <select
+                        value={formData.nivel}
+                        onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="Principiante (Desde cero)">Principiante (Desde cero)</option>
+                        <option value="Intermedio (Ya entrené antes)">Intermedio (Ya entrené antes)</option>
+                        <option value="Avanzado (Boxeador / Atleta activo)">Avanzado (Boxeador / Atleta activo)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Disponibilidad Semanal *</label>
+                      <select
+                        value={formData.diasDisponibles}
+                        onChange={(e) => setFormData({ ...formData, diasDisponibles: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="2 días por semana">2 días por semana</option>
+                        <option value="3 días por semana">3 días por semana</option>
+                        <option value="4 a 5 días por semana">4 a 5 días por semana</option>
+                        <option value="Todos los días">Todos los días</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">¿Dónde vas a entrenar? *</label>
+                      <select
+                        value={formData.lugar}
+                        onChange={(e) => setFormData({ ...formData, lugar: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="En gimnasio tradicional">En gimnasio tradicional</option>
+                        <option value="En casa (sin equipamiento)">En casa (sin equipamiento)</option>
+                        <option value="En casa (con bolsa / mancuernas)">En casa (con bolsa / mancuernas)</option>
+                        <option value="Al aire libre / Parque">Al aire libre / Parque</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Lesiones o Molestias Físicas</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Dolor leve en rodilla derecha, hombro, etc. (O escribí 'Ninguna')"
+                      value={formData.lesiones}
+                      onChange={(e) => setFormData({ ...formData, lesiones: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
+                  >
+                    <Send className="w-4 h-4 fill-black" />
+                    Enviar Diagnóstico por WhatsApp a Joel
+                  </button>
+                </form>
+              )}
+            </div>
+
+            {/* LISTA DE RUTINAS / VIDEOS DESDE SUPABASE */}
+            <div className="space-y-4 pt-4">
+              <h3 className="text-xl font-black text-white uppercase flex items-center gap-2">
+                <Activity className="w-5 h-5 text-yellow-400" />
+                Catálogo de Clases & Contenidos
+              </h3>
+
+              {cargandoPosts ? (
+                <div className="text-center text-xs text-zinc-500 py-12 font-mono">
+                  Cargando entrenamientos...
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
+                  <Sparkles className="w-8 h-8 text-yellow-400 mx-auto" />
+                  <h3 className="text-lg font-black text-white uppercase">Próximamente nuevos contenidos</h3>
+                  <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                    Estamos preparando rutinas abiertas, clases técnicas de boxeo y material audiovisual exclusivo. ¡Atentos a las próximas publicaciones!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {posts.map((post) => {
+                    const isPrivate = post.access_type === 'private';
+                    const isUnlocked = unlockedPosts[post.id];
+
+                    return (
+                      <div 
+                        key={post.id}
+                        className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
+                              {post.category}
                             </span>
+                            {isPrivate && (
+                              <span className="flex items-center gap-1 text-[11px] font-bold text-yellow-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                                <Lock className="w-3 h-3 text-yellow-400" /> EXCLUSIVO
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="text-lg font-black text-white uppercase leading-tight">{post.title}</h3>
+
+                          {post.description && (
+                            <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
+                              {post.description}
+                            </p>
                           )}
                         </div>
 
-                        <h3 className="text-lg font-black text-white uppercase leading-tight">{post.title}</h3>
-
-                        {post.description && (
-                          <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
-                            {post.description}
-                          </p>
+                        {/* Lógica de desbloqueo si es privado */}
+                        {isPrivate && !isUnlocked ? (
+                          <div className="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl text-center space-y-2 mt-2">
+                            <Lock className="w-6 h-6 text-yellow-400 mx-auto" />
+                            <p className="text-[11px] text-zinc-400">Ingresá la clave de alumno para desbloquear este video:</p>
+                            <div className="flex gap-2 max-w-xs mx-auto">
+                              <input
+                                type="password"
+                                placeholder="Contraseña"
+                                value={inputPasswords[post.id] || ''}
+                                onChange={(e) => setInputPasswords({ ...inputPasswords, [post.id]: e.target.value })}
+                                className="flex-1 bg-black border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                              />
+                              <button
+                                onClick={() => handleUnlockPost(post.id, post.password)}
+                                className="bg-yellow-400 text-black font-black px-4 py-1.5 rounded-lg text-xs uppercase"
+                              >
+                                Ver
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <a
+                            href={post.video_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+                          >
+                            <PlayCircle className="w-4 h-4" /> Abrir Video / Entrenar
+                          </a>
                         )}
                       </div>
-
-                      {/* Lógica de desbloqueo si es privado */}
-                      {isPrivate && !isUnlocked ? (
-                        <div className="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl text-center space-y-2 mt-2">
-                          <Lock className="w-6 h-6 text-yellow-400 mx-auto" />
-                          <p className="text-[11px] text-zinc-400">Ingresá la clave de alumno para desbloquear este video:</p>
-                          <div className="flex gap-2 max-w-xs mx-auto">
-                            <input
-                              type="password"
-                              placeholder="Contraseña"
-                              value={inputPasswords[post.id] || ''}
-                              onChange={(e) => setInputPasswords({ ...inputPasswords, [post.id]: e.target.value })}
-                              className="flex-1 bg-black border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                            />
-                            <button
-                              onClick={() => handleUnlockPost(post.id, post.password)}
-                              className="bg-yellow-400 text-black font-black px-4 py-1.5 rounded-lg text-xs uppercase"
-                            >
-                              Ver
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <a
-                          href={post.video_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
-                        >
-                          <PlayCircle className="w-4 h-4" /> Abrir Video / Entrenar
-                        </a>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1054,4 +1243,4 @@ export default function App() {
 
     </div>
   );
-  }
+                }
