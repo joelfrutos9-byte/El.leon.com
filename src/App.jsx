@@ -1,4 +1,3 @@
-import CalculadoraNutricional from './CalculadoraNutricional';
 import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
@@ -34,6 +33,7 @@ import {
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
+import CalculadoraNutricional from './CalculadoraNutricional';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('mision');
@@ -593,7 +593,7 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-zinc-900">
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">1. Producción Textil</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre strictly el costo de confección.</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre estrictamente el costo de confección.</p>
                 </div>
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">2. Logística & Traslado</span>
@@ -608,15 +608,20 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. VISTA: CLASES & RUTINAS (+ PORTAL DE ALUMNO PRIVADO + FORMULARIO DE EVALUACIÓN) */}
+        {/* 2. VISTA: CLASES & RUTINAS (+ PORTAL DE ALUMNO + FORMULARIO + CALCULADORA NUTRICIONAL PÚBLICA) */}
         {activeTab === 'clases' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
               <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Centro de Entrenamiento</span>
               <h2 className="text-3xl font-black text-white uppercase tracking-tight">CLASES & RUTINAS</h2>
               <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                Ingresá con tu Clave de Alumno para ver tus planes privados o pedí tu rutina a medida.
+                Usá la calculadora abierta, ingresá con tu Clave de Alumno o pedí tu plan a medida.
               </p>
+            </div>
+
+            {/* CALCULADORA NUTRICIONAL PÚBLICA Y GRATUITA */}
+            <div>
+              <CalculadoraNutricional />
             </div>
 
             {/* BUSCADOR PRIVADO DE ALUMNO */}
