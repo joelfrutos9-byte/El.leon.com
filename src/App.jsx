@@ -1,185 +1,600 @@
-import React, { useState, useEffect } from 'react'
-import { supabase } from './supabaseClient'
-import Admin from './Admin'
-import { Dumbbell, Lock, PlayCircle, Shield, Sparkles } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { 
+  ShoppingBag, 
+  Zap, 
+  MessageCircle, 
+  Users, 
+  Award, 
+  Instagram, 
+  Flame, 
+  Newspaper, 
+  Tv, 
+  Home,
+  Trophy,
+  UserCheck,
+  History,
+  DollarSign,
+  Utensils,
+  Play,
+  Video,
+  Menu,
+  X,
+  ChevronRight,
+  ShieldCheck,
+  Dumbbell,
+  PackageCheck,
+  Calendar,
+  Layers,
+  Sparkles,
+  Lock,
+  PlayCircle,
+  Shield
+} from 'lucide-react';
+import { supabase } from './supabaseClient';
+import Admin from './Admin';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('feed') // 'feed' o 'admin'
-  const [posts, setPosts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [unlockedPosts, setUnlockedPosts] = useState({}) // { postId: true }
-  const [inputPasswords, setInputPasswords] = useState({})
+  const [activeTab, setActiveTab] = useState('mision');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedStoreCat, setSelectedStoreCat] = useState('todos');
+  const [selectedSize, setSelectedSize] = useState({});
+  const [noticiasCms, setNoticiasCms] = useState([]);
+  const [cargandoNoticias, setCargandoNoticias] = useState(true);
 
-  // Cargar publicaciones desde Supabase
+  // Estados para Clases / Contenido dinámico de Supabase
+  const [posts, setPosts] = useState([]);
+  const [cargandoPosts, setCargandoPosts] = useState(true);
+  const [unlockedPosts, setUnlockedPosts] = useState({});
+  const [inputPasswords, setInputPasswords] = useState({});
+
+  const whatsappNumber = "5493425236731";
+  const instagramUrl = "https://instagram.com/joelbox_";
+  const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb8f4EU3QxS1ckJsS31A";
+
+  const SANITY_PROJECT_ID = '837br3mo';
+  const SANITY_DATASET = 'production';
+
   useEffect(() => {
-    fetchPosts()
-  }, [])
+    // Cargar noticias desde Sanity (fallback o CMS)
+    const query = encodeURIComponent('*[_type in ["noticia", "post"]] | order(_createdAt desc)');
+    const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${query}`;
 
-  const fetchPosts = async () => {
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data.result && data.result.length > 0) {
+          setNoticiasCms(data.result);
+        }
+        setCargandoNoticias(false);
+      })
+      .catch(err => {
+        console.log("Consulta Sanity fallback:", err);
+        setCargandoNoticias(false);
+      });
+
+    // Cargar posts / clases desde Supabase
+    fetchSupabasePosts();
+  }, []);
+
+  const fetchSupabasePosts = async () => {
     try {
-      setLoading(true)
+      setCargandoPosts(true);
       const { data, error } = await supabase
         .from('posts')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      if (error) throw error
-      setPosts(data || [])
-    } catch (error) {
-      console.error('Error cargando contenidos:', error.message)
+      if (error) throw error;
+      setPosts(data || []);
+    } catch (err) {
+      console.log("Error cargando contenidos de Supabase:", err.message);
     } finally {
-      setLoading(false)
+      setCargandoPosts(false);
     }
-  }
+  };
 
-  const handleUnlock = (postId, correctPassword) => {
-    const entered = inputPasswords[postId] || ''
+  const handleUnlockPost = (postId, correctPassword) => {
+    const entered = inputPasswords[postId] || '';
     if (entered.trim() === correctPassword.trim()) {
-      setUnlockedPosts(prev => ({ ...prev, [postId]: true }))
+      setUnlockedPosts(prev => ({ ...prev, [postId]: true }));
     } else {
-      alert('Contraseña incorrecta')
+      alert('Contraseña incorrecta para esta clase.');
     }
-  }
+  };
+
+  // Estructura completa de menú por categorías con las nuevas pestañas integradas
+  const menuItems = [
+    { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
+    { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
+    { id: 'admin', label: 'Panel Creador', sub: 'Acceso Exclusivo PIN', icon: Shield, badge: 'ADMIN' },
+    { id: 'boxeador', label: 'El Boxeador', sub: 'Perfil de Joel Diaz', icon: UserCheck },
+    { id: 'tienda', label: 'León Store', sub: 'Indumentaria & Merch', icon: ShoppingBag, badge: 'TIENDA' },
+    { id: 'elcamino', label: 'El Camino', sub: 'Docuseries & Bitácora', icon: Tv },
+    { id: 'noticias', label: 'Noticias', sub: 'Medio Oficial', icon: Newspaper },
+    { id: 'elring', label: 'El Ring', sub: 'Historial Deportivo', icon: Trophy },
+    { id: 'historia', label: 'La Historia', sub: 'Cronología Deportiva', icon: History },
+    { id: 'financiacion', label: 'El León se Financia', sub: 'Hub de Autogestión', icon: DollarSign },
+    { id: 'aliados', label: 'Aliados', sub: 'Marcas & Sponsors', icon: Award },
+    { id: 'lamanada', label: 'La Manada', sub: 'Comunidad WhatsApp', icon: Users },
+    { id: 'archivo', label: 'El Archivo', sub: 'Memoria Histórica', icon: Layers }
+  ];
+
+  // Productos León Store
+  const products = [
+    {
+      id: 'original-01',
+      name: 'EL LEÓN — ORIGINAL 01',
+      tagline: 'LA PRIMERA PIEL DEL LEÓN',
+      line: 'LÍNEA 01 — ORIGINAL',
+      category: 'merch',
+      price: 34900,
+      deposit: 17500,
+      image: '/1785149020942.png',
+      badge: 'PREVENTA EXCLUSIVA',
+      badgeColor: 'bg-zinc-800 text-yellow-400 border-yellow-500/30',
+      description: 'Corte oversize urbano. Algodón pesado de alta resistencia diseñado para soportar el entrenamiento diario.',
+      sizes: ['S', 'M', 'L', 'XL', 'XXL']
+    },
+    {
+      id: 'bolivia-remera',
+      name: 'RUMBO A BOLIVIA — REMERA',
+      tagline: 'EDICIÓN OFICIAL OPERACIÓN SANTA CRUZ',
+      line: 'LÍNEA 02 — CAMPAÑA BOLIVIA 2026',
+      category: 'santa_cruz',
+      price: 34900,
+      deposit: 17500,
+      image: '/1785148963897.png',
+      badge: '100% A BENEFICIO',
+      badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
+      description: 'Edición oficial de la misión activa. Todo el margen neto se destina a cubrir pasajes y logística del campamento.',
+      sizes: ['S', 'M', 'L', 'XL', 'XXL']
+    },
+    {
+      id: 'bolivia-hoodie',
+      name: 'RUMBO A BOLIVIA — HOODIE',
+      tagline: 'BUZO OVERSIZE EDICIÓN LIMITADA',
+      line: 'LÍNEA 02 — CAMPAÑA BOLIVIA 2026',
+      category: 'santa_cruz',
+      price: 58000,
+      deposit: 29000,
+      image: '/1785148947849.png',
+      badge: '100% A BENEFICIO',
+      badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
+      description: 'Buzo pesado con capucha doble, puños reforzados y estampado táctico de alto impacto en espalda.',
+      sizes: ['S', 'M', 'L', 'XL', 'XXL']
+    },
+    {
+      id: 'fight-vendas',
+      name: 'VENDAS OFICIALES EL LEÓN 4.5M',
+      tagline: 'PROTECCIÓN Y SOPORTE PRO',
+      line: 'FIGHT SHOP — EQUIPAMIENTO',
+      category: 'fight_shop',
+      price: 12500,
+      deposit: 6250,
+      image: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=600&auto=format&fit=crop&q=80',
+      badge: 'PRÓXIMAMENTE',
+      badgeColor: 'bg-yellow-950 text-yellow-400 border-yellow-500/30',
+      description: 'Vendas semi-elásticas con sujeción de pulgar y velcro de alta resistencia para guanteos exigentes.',
+      sizes: ['ÚNICO']
+    }
+  ];
+
+  // Acciones puntuales de financiación (comida / eventos temporales)
+  const accionesTemporales = [
+    {
+      id: 'empanadas-tanda-1',
+      title: 'GRAN VENTA DE EMPANADAS — TANDA SANTA CRUZ',
+      fecha: 'Sábado 15 de Agosto 2026',
+      lugar: 'Santo Tomé / Retiro en Gimnasio IMAD',
+      precioPorDocena: 14000,
+      descripcion: 'Empanadas caseras de carne cortada a cuchillo. Todo lo vendido financia la logística de traslado.',
+      activo: true
+    }
+  ];
+
+  // Docuseries
+  const episodiosDocu = [
+    {
+      id: 'ep-01',
+      number: 'EP. 01',
+      title: 'Decidimos Ir — Rumbo a Bolivia 2026',
+      date: 'Febrero 2026',
+      duration: '08:45 min',
+      thumbnail: '/E-576.jpg',
+      description: 'El momento en que fijamos el objetivo de la Operación Santa Cruz y organizamos la autogestión de la campaña.',
+      videoUrl: 'https://instagram.com/joelbox_'
+    },
+    {
+      id: 'ep-02',
+      number: 'EP. 02',
+      title: 'Doble Turno y Bolsa Pesada en IMAD',
+      date: 'Febrero 2026',
+      duration: '12:10 min',
+      thumbnail: '/20240203092340_IMG_2552.jpg',
+      description: 'Rutina completa de preparación física, sparring técnico e intensificación del trabajo diario.',
+      videoUrl: 'https://instagram.com/joelbox_'
+    }
+  ];
+
+  // Historial Deportivo
+  const peleasHistorial = [
+    {
+      id: 'p-01',
+      fecha: 'Por Confirmar 2026',
+      rival: 'Por Confirmar',
+      lugar: 'Rosario / Santa Fe, Arg',
+      categoria: 'Peso Gallo (Amateur)',
+      resultado: 'PRÓXIMO COMBATE',
+      metodo: 'En negociación',
+      status: 'proximo'
+    },
+    {
+      id: 'p-02',
+      fecha: 'Temporada 2025',
+      rival: 'Rival Provincial',
+      lugar: 'Santa Fe, Argentina',
+      categoria: 'Peso Gallo',
+      resultado: 'VICTORIA',
+      metodo: 'Puntos (Decisión Unánime)',
+      status: 'pasado'
+    }
+  ];
+
+  const recaudado = 0;
+  const objetivo = 2600000;
+  const porcentaje = Math.min(Math.round((recaudado / objetivo) * 100), 100);
+
+  const handleSelectTab = (id) => {
+    setActiveTab(id);
+    setMobileMenuOpen(false);
+    if (id === 'clases') {
+      fetchSupabasePosts();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectSize = (productId, size) => {
+    setSelectedSize(prev => ({ ...prev, [productId]: size }));
+  };
+
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
+  };
+
+  const createOrderWhatsapp = (product) => {
+    const size = selectedSize[product.id];
+    if (!size) {
+      alert('Por favor selecciona un talle o formato antes de reservar.');
+      return;
+    }
+    const msg = `¡Hola Joel! Quiero reservar el producto: *${product.name}* (Talle/Opción: *${size}*).\n\n` +
+      `• Precio Preventa: ${formatCurrency(product.price)}\n` +
+      `• Seña del 50%: ${formatCurrency(product.deposit)}\n\n` +
+      `Quedo a la espera de los datos de transferencia. ¡Vamos El León!`;
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const createComidaWhatsapp = (accion) => {
+    const msg = `¡Hola Joel! Quiero encargar empanadas para la *${accion.title}*.\n` +
+      `• Precio: ${formatCurrency(accion.precioPorDocena)} / docena\n\n` +
+      `Avisame cómo transferir la seña.`;
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const createSponsorWhatsapp = () => {
+    const msg = `¡Hola Joel! Me interesa sumarme como ALIADO / SPONSOR estratégico de El León. Quisiera coordinar una propuesta.`;
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const filteredProducts = selectedStoreCat === 'todos' 
+    ? products 
+    : products.filter(p => p.category === selectedStoreCat);
+
+  const activeTabMeta = menuItems.find(item => item.id === activeTab) || menuItems[0];
 
   return (
-    <div style={{ backgroundColor: '#0a0a0a', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      {/* HEADER / NAVEGACIÓN */}
-      <header style={{
-        backgroundColor: '#111',
-        borderBottom: '1px solid #222',
-        padding: '16px 20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Dumbbell color="#ffde00" size={28} />
-          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', letterSpacing: '1px' }}>EL LEÓN</h1>
+    <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-yellow-500 selection:text-black pb-16">
+      
+      {/* HEADER PRINCIPAL */}
+      <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          
+          {/* LOGO EL LEÓN */}
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => handleSelectTab('mision')}>
+            <span className="text-xl font-black tracking-tighter text-yellow-400">EL LEÓN</span>
+            <span className="text-[10px] bg-yellow-500/10 text-yellow-400 font-bold px-2 py-0.5 rounded border border-yellow-500/20 uppercase tracking-widest hidden sm:inline">
+              UNIVERSO DIGITAL
+            </span>
+          </div>
+
+          {/* ACCIONES SUPERIORES Y BOTÓN MENÚ */}
+          <div className="flex items-center gap-2">
+            <a 
+              href={instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-bold bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Instagram className="w-3.5 h-3.5 text-yellow-400" />
+              <span>@joelbox_</span>
+            </a>
+
+            {/* BOTÓN MENÚ CELULAR / PANTALLA */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-black px-3.5 py-1.5 rounded-xl text-xs uppercase tracking-wider transition-all"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              <span>MENÚ</span>
+            </button>
+          </div>
         </div>
 
-        <nav style={{ display: 'flex', gap: '10px' }}>
+        {/* TABS SUPERIORES RÁPIDAS (ACCESO DIRECTO) */}
+        <div className="max-w-6xl mx-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {menuItems.slice(0, 6).map(item => {
+            const IconComponent = item.icon;
+            const isSelected = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleSelectTab(item.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-all ${
+                  isSelected 
+                    ? 'bg-zinc-100 text-black font-black' 
+                    : 'bg-zinc-900/80 text-zinc-400 hover:text-white border border-zinc-800/80'
+                }`}
+              >
+                <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-black' : 'text-yellow-400'}`} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
           <button
-            onClick={() => { setActiveTab('feed'); fetchPosts(); }}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '20px',
-              border: 'none',
-              backgroundColor: activeTab === 'feed' ? '#ffde00' : '#222',
-              color: activeTab === 'feed' ? '#000' : '#fff',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
+            onClick={() => setMobileMenuOpen(true)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 whitespace-nowrap"
           >
-            Contenido
+            <span>+ Ver Todo</span>
           </button>
-          <button
-            onClick={() => setActiveTab('admin')}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '20px',
-              border: 'none',
-              backgroundColor: activeTab === 'admin' ? '#ffde00' : '#222',
-              color: activeTab === 'admin' ? '#000' : '#fff',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <Shield size={16} />
-            Panel
-          </button>
-        </nav>
+        </div>
       </header>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <main style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-        {activeTab === 'admin' ? (
-          <Admin />
-        ) : (
+      {/* MENÚ DESPLEGABLE EN PANTALLA COMPLETA */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-6 overflow-y-auto animate-fade-in">
           <div>
-            <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>Entrenamientos y Clases</h2>
-              <p style={{ color: '#aaa', fontSize: '14px', margin: 0 }}>Accedé a las rutinas y videos oficiales</p>
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-4 mb-6">
+              <div>
+                <span className="text-xl font-black text-yellow-400 tracking-tighter block">UNIVERSO DE EL LEÓN</span>
+                <span className="text-xs text-zinc-400">Navegador General de Secciones</span>
+              </div>
+              <button 
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 bg-zinc-900 border border-zinc-700 rounded-full text-zinc-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {loading ? (
-              <p style={{ textAlign: 'center', color: '#888', marginTop: '40px' }}>Cargando publicaciones...</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {menuItems.map((item) => {
+                const IconComponent = item.icon;
+                const isSelected = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSelectTab(item.id)}
+                    className={`flex items-center justify-between p-4 rounded-2xl text-left border transition-all ${
+                      isSelected 
+                        ? 'bg-yellow-400 text-black border-yellow-400 font-bold' 
+                        : 'bg-zinc-950 text-zinc-200 border-zinc-800 hover:border-zinc-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-xl ${isSelected ? 'bg-black text-yellow-400' : 'bg-zinc-900 text-yellow-400'}`}>
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="block text-sm font-black uppercase leading-tight">{item.label}</span>
+                        <span className={`text-[11px] block mt-0.5 ${isSelected ? 'text-zinc-900' : 'text-zinc-400'}`}>{item.sub}</span>
+                      </div>
+                    </div>
+
+                    <ChevronRight className={`w-4 h-4 ${isSelected ? 'text-black' : 'text-zinc-600'}`} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-zinc-900 text-center space-y-2">
+            <p className="text-xs text-zinc-400">Joel Diaz — Boxeador & Profesor • @joelbox_</p>
+            <button 
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-xs text-yellow-400 font-bold underline uppercase tracking-wider"
+            >
+              Cerrar Menú
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TITULAR DE SECCIÓN ACTUAL */}
+      <div className="bg-zinc-950 border-b border-zinc-900 py-3 px-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-zinc-400">
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-600">Sección:</span>
+            <span className="font-bold text-yellow-400 uppercase tracking-wider">{activeTabMeta.label}</span>
+          </div>
+          <span className="text-[10px] bg-zinc-900 px-2 py-0.5 rounded text-zinc-400 font-mono hidden sm:inline">
+            UNIVERSO DIGITAL / 2026
+          </span>
+        </div>
+      </div>
+
+      {/* VISTAS DE LAS SECCIONES */}
+      <main className="max-w-6xl mx-auto px-4 pt-6">
+
+        {/* 1. VISTA: RUMBO A SANTA CRUZ / INICIO */}
+        {activeTab === 'mision' && (
+          <div className="space-y-10 animate-fade-in">
+            <section className="relative rounded-3xl overflow-hidden border border-zinc-800 p-6 sm:p-12 text-center bg-zinc-950">
+              <div className="absolute inset-0 z-0">
+                <img src="/E-576.jpg" alt="Joel El León" className="w-full h-full object-cover object-center opacity-30 filter grayscale" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+              </div>
+
+              <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-950 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                  <Zap className="w-3.5 h-3.5" /> MISIÓN ACTIVA: OPERACIÓN SANTA CRUZ 2026
+                </span>
+                
+                <h1 className="text-3xl sm:text-6xl font-black text-white uppercase tracking-tight leading-none">
+                  EL UNIVERSO DIGITAL DE <span className="text-yellow-400">EL LEÓN</span>
+                </h1>
+                
+                <p className="text-zinc-300 text-xs sm:text-sm leading-relaxed max-w-lg mx-auto">
+                  Centro oficial de operaciones de <strong>Joel Diaz (@joelbox_)</strong>. Bitácora de entrenamiento, clases, tienda oficial y financiamiento autogestionado.
+                </p>
+
+                <div className="pt-2 flex flex-wrap gap-3 justify-center">
+                  <button 
+                    onClick={() => handleSelectTab('clases')}
+                    className="bg-yellow-400 text-black font-black px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:bg-yellow-300 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Dumbbell className="w-4 h-4" /> Ver Clases & Rutinas
+                  </button>
+                  <button 
+                    onClick={() => handleSelectTab('tienda')}
+                    className="bg-zinc-900 border border-zinc-700 text-white font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
+                  >
+                    <ShoppingBag className="w-4 h-4 text-yellow-400" /> Ir a León Store
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* TABLERO DE MISIÓN ACTIVA */}
+            <section className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-2xl space-y-5">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <span className="bg-yellow-400 text-black text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    PROYECTO DESTACADO / TEMPORADA 01
+                  </span>
+                  <h2 className="text-2xl font-black text-white uppercase mt-1.5 flex items-center gap-2">
+                    🇧🇴 OPERACIÓN SANTA CRUZ 2026
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">Campamento internacional de entrenamiento en altura y logística.</p>
+                </div>
+
+                <div className="sm:text-right">
+                  <span className="text-[10px] text-zinc-400 uppercase font-mono block">Progreso actual</span>
+                  <span className="text-2xl font-mono font-bold text-yellow-400">
+                    ${recaudado.toLocaleString('es-AR')} <span className="text-xs text-zinc-500">/ ${objetivo.toLocaleString('es-AR')}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full bg-zinc-900 h-4 rounded-full overflow-hidden p-0.5 border border-zinc-800">
+                <div 
+                  className="bg-gradient-to-r from-yellow-500 to-yellow-300 h-full rounded-full transition-all duration-700"
+                  style={{ width: `${porcentaje}%` }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-zinc-900">
+                <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
+                  <span className="text-xs font-bold text-yellow-400 block uppercase">1. Producción Textil</span>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre estrictamente el costo de confección.</p>
+                </div>
+                <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
+                  <span className="text-xs font-bold text-yellow-400 block uppercase">2. Logística & Traslado</span>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">El margen neto financia directamente pasajes terrestres/aéreos y estadía.</p>
+                </div>
+                <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
+                  <span className="text-xs font-bold text-yellow-400 block uppercase">3. Preparación de Combate</span>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Soporta los insumos de vendaje, suplementación e indumentaria técnica.</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* 2. NUEVA VISTA: CLASES & RUTINAS (DINÁMICO DESDE SUPABASE) */}
+        {activeTab === 'clases' && (
+          <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Centro de Entrenamiento</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">CLASES & RUTINAS</h2>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
+                Accedé a los videos de técnica, entrenamientos y material exclusivo subidos desde el Panel Creador.
+              </p>
+            </div>
+
+            {cargandoPosts ? (
+              <div className="text-center text-xs text-zinc-500 py-12 font-mono">
+                Cargando entrenamientos desde Supabase...
+              </div>
             ) : posts.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#111', borderRadius: '12px', border: '1px solid #222' }}>
-                <Sparkles size={36} color="#ffde00" style={{ marginBottom: '12px' }} />
-                <p style={{ color: '#aaa' }}>Todavía no hay publicaciones. ¡Entrá al Panel para subir la primera!</p>
+              <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
+                <Sparkles className="w-8 h-8 text-yellow-400 mx-auto" />
+                <h3 className="text-lg font-black text-white uppercase">Todavía no hay publicaciones cargadas</h3>
+                <p className="text-xs text-zinc-400">Ingresá al "Panel Creador" en el menú con tu PIN para subir tu primer video o rutina.</p>
+                <button
+                  onClick={() => handleSelectTab('admin')}
+                  className="bg-yellow-400 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase"
+                >
+                  Ir al Panel Creador
+                </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gap: '20px' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {posts.map((post) => {
-                  const isPrivate = post.access_type === 'private'
-                  const isUnlocked = unlockedPosts[post.id]
+                  const isPrivate = post.access_type === 'private';
+                  const isUnlocked = unlockedPosts[post.id];
 
                   return (
                     <div 
                       key={post.id}
-                      style={{
-                        backgroundColor: '#111',
-                        borderRadius: '12px',
-                        border: '1px solid #222',
-                        padding: '20px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
-                      }}
+                      className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all"
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <span style={{ 
-                            backgroundColor: '#222', 
-                            color: '#ffde00', 
-                            fontSize: '12px', 
-                            padding: '4px 8px', 
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase'
-                          }}>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
                             {post.category}
                           </span>
-                          <h3 style={{ margin: '8px 0 4px 0', fontSize: '18px' }}>{post.title}</h3>
+                          {isPrivate && (
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-yellow-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                              <Lock className="w-3 h-3 text-yellow-400" /> EXCLUSIVO
+                            </span>
+                          )}
                         </div>
 
-                        {isPrivate && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ffde00', fontSize: '12px' }}>
-                            <Lock size={14} /> Exclusivo
-                          </span>
+                        <h3 className="text-lg font-black text-white uppercase leading-tight">{post.title}</h3>
+
+                        {post.description && (
+                          <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
+                            {post.description}
+                          </p>
                         )}
                       </div>
 
-                      {post.description && (
-                        <p style={{ color: '#ccc', fontSize: '14px', margin: 0, lineHeight: '1.5' }}>
-                          {post.description}
-                        </p>
-                      )}
-
-                      {/* LÓGICA DE VISUALIZACIÓN DE VIDEO */}
+                      {/* Lógica de desbloqueo si es privado */}
                       {isPrivate && !isUnlocked ? (
-                        <div style={{ backgroundColor: '#181818', padding: '16px', borderRadius: '8px', border: '1px solid #333', textAlign: 'center', marginTop: '8px' }}>
-                          <Lock size={28} color="#ffde00" style={{ marginBottom: '8px' }} />
-                          <p style={{ fontSize: '14px', color: '#aaa', margin: '0 0 12px 0' }}>Este contenido requiere contraseña de alumno</p>
-                          <div style={{ display: 'flex', gap: '8px', maxWidth: '300px', margin: '0 auto' }}>
+                        <div className="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl text-center space-y-2 mt-2">
+                          <Lock className="w-6 h-6 text-yellow-400 mx-auto" />
+                          <p className="text-[11px] text-zinc-400">Ingresá la clave de alumno para desbloquear este video:</p>
+                          <div className="flex gap-2 max-w-xs mx-auto">
                             <input
                               type="password"
                               placeholder="Contraseña"
                               value={inputPasswords[post.id] || ''}
                               onChange={(e) => setInputPasswords({ ...inputPasswords, [post.id]: e.target.value })}
-                              style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', backgroundColor: '#222', color: '#fff' }}
+                              className="flex-1 bg-black border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-400"
                             />
                             <button
-                              onClick={() => handleUnlock(post.id, post.password)}
-                              style={{ backgroundColor: '#ffde00', color: '#000', fontWeight: 'bold', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}
+                              onClick={() => handleUnlockPost(post.id, post.password)}
+                              className="bg-yellow-400 text-black font-black px-4 py-1.5 rounded-lg text-xs uppercase"
                             >
                               Ver
                             </button>
@@ -190,32 +605,434 @@ export default function App() {
                           href={post.video_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            backgroundColor: '#ffde00',
-                            color: '#000',
-                            padding: '10px 16px',
-                            borderRadius: '8px',
-                            fontWeight: 'bold',
-                            textDecoration: 'none',
-                            marginTop: '8px'
-                          }}
+                          className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
                         >
-                          <PlayCircle size={18} />
-                          Abrir Video / Enlace
+                          <PlayCircle className="w-4 h-4" /> Abrir Video / Entrenar
                         </a>
                       )}
                     </div>
-                  )
+                  );
                 })}
               </div>
             )}
           </div>
         )}
+
+        {/* 3. NUEVA VISTA: PANEL CREADOR (CON PIN 0811) */}
+        {activeTab === 'admin' && (
+          <div className="animate-fade-in">
+            <Admin />
+          </div>
+        )}
+
+        {/* 4. VISTA: EL BOXEADOR */}
+        {activeTab === 'boxeador' && (
+          <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Perfil Oficial</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL BOXEADOR</h2>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
+                Joel Diaz — Atleta amateur, profesor de boxeo y creador de contenido deportivo.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800">
+                <img src="/E-524.jpg" alt="Joel Diaz El León" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+                <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">En el rincón</span>
+              </div>
+
+              <div className="space-y-5">
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-yellow-400 uppercase tracking-widest">Biografía & Identidad</span>
+                  <h3 className="text-2xl font-black text-white uppercase">JOEL DIAZ ("EL LEÓN")</h3>
+                  <p className="text-xs text-zinc-400">Rosario / Santo Tomé, Santa Fe, Argentina</p>
+                </div>
+
+                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                  Entreno día a día en el gimnasio IMAD con una sola visión: superarme combate tras combate, transmitir la disciplina del boxeo a mis alumnos y llevar nuestra bandera a torneos internacionales.
+                </p>
+
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-zinc-900">
+                  <div>
+                    <span className="text-[10px] text-zinc-500 uppercase block font-bold">División</span>
+                    <span className="text-sm font-black text-white">Peso Gallo</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-zinc-500 uppercase block font-bold">Guardia</span>
+                    <span className="text-sm font-black text-white">Ortodoxa</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-zinc-500 uppercase block font-bold">Récord Amateur</span>
+                    <span className="text-sm font-black text-yellow-400">25-10-1</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-zinc-500 uppercase block font-bold">Gimnasio Base</span>
+                    <span className="text-sm font-black text-white">IMAD Boxing</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. VISTA: LEÓN STORE */}
+        {activeTab === 'tienda' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Tienda Oficial del Universo</span>
+                <h2 className="text-3xl font-black text-white uppercase">LEÓN STORE</h2>
+                <p className="text-xs text-zinc-400 mt-1">Reserva el 50% vía WhatsApp y salda al recibir la prenda.</p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedStoreCat('todos')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                    selectedStoreCat === 'todos' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+                  }`}
+                >
+                  Todos
+                </button>
+                <button
+                  onClick={() => setSelectedStoreCat('merch')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                    selectedStoreCat === 'merch' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+                  }`}
+                >
+                  Línea Original
+                </button>
+                <button
+                  onClick={() => setSelectedStoreCat('santa_cruz')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                    selectedStoreCat === 'santa_cruz' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+                  }`}
+                >
+                  Campaña Bolivia
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {filteredProducts.map((p) => (
+                <div key={p.id} className="bg-zinc-950 rounded-2xl border border-zinc-800 overflow-hidden flex flex-col justify-between hover:border-zinc-700 transition-all">
+                  <div>
+                    <div className="relative aspect-square bg-zinc-900 overflow-hidden flex items-center justify-center">
+                      <img 
+                        src={p.image} 
+                        alt={p.name}
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <div className={`absolute top-3 left-3 text-[10px] font-black tracking-wider px-2.5 py-1 rounded-md border ${p.badgeColor}`}>
+                        {p.badge}
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <span className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase">{p.line}</span>
+                        <h3 className="text-lg font-black text-white leading-tight uppercase mt-0.5">{p.name}</h3>
+                        <p className="text-xs text-zinc-400 italic mt-0.5">{p.tagline}</p>
+                      </div>
+
+                      <p className="text-xs text-zinc-300 leading-relaxed">{p.description}</p>
+
+                      <div className="pt-2">
+                        <label className="text-[11px] font-bold text-zinc-400 uppercase block mb-1.5">Seleccionar Talle:</label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {p.sizes.map((size) => (
+                            <button
+                              key={size}
+                              onClick={() => handleSelectSize(p.id, size)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-md border transition-all ${
+                                selectedSize[p.id] === size
+                                  ? 'bg-yellow-400 text-black border-yellow-400 scale-105'
+                                  : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700'
+                              }`}
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-zinc-900 flex justify-between items-end">
+                        <div>
+                          <span className="text-[10px] text-zinc-400 block uppercase">Precio</span>
+                          <span className="text-lg font-black text-white">{formatCurrency(p.price)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] text-yellow-400 block uppercase font-bold">Seña de Reserva (50%)</span>
+                          <span className="text-sm font-bold text-yellow-400">{formatCurrency(p.deposit)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-5 pt-0">
+                    <button
+                      onClick={() => createOrderWhatsapp(p)}
+                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                    >
+                      <MessageCircle className="w-4 h-4 fill-black" /> Reservar por WhatsApp
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 6. VISTA: EL CAMINO */}
+        {activeTab === 'elcamino' && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Bitácora Audiovisual</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL CAMINO — DOCUSERIES</h2>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto">
+                El trabajo silencioso del gimnasio, los sparrings y la preparación rumbo a las metas.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {episodiosDocu.map((ep) => (
+                <div key={ep.id} className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <div className="relative aspect-video bg-zinc-900 overflow-hidden group">
+                      <img src={ep.thumbnail} alt={ep.title} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center pl-0.5 text-black">
+                          <Play className="w-6 h-6 fill-black" />
+                        </div>
+                      </div>
+                      <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-mono px-2 py-0.5 rounded">
+                        {ep.duration}
+                      </span>
+                    </div>
+
+                    <div className="p-5 space-y-2">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-yellow-400 uppercase">
+                        <span>{ep.number}</span>
+                        <span className="text-zinc-500">{ep.date}</span>
+                      </div>
+                      <h3 className="text-base font-black text-white uppercase">{ep.title}</h3>
+                      <p className="text-xs text-zinc-400 leading-relaxed">{ep.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-5 pt-0">
+                    <a
+                      href={ep.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-zinc-700"
+                    >
+                      <Video className="w-4 h-4 text-yellow-400" /> Ver Episodio
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 7. VISTA: NOTICIAS */}
+        {activeTab === 'noticias' && (
+          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Medio Oficial</span>
+              <h2 className="text-3xl font-black text-white uppercase">📰 NOTICIAS DE EL LEÓN</h2>
+            </div>
+
+            <div className="space-y-4">
+              {cargandoNoticias ? (
+                <div className="text-center text-xs text-zinc-500 py-6 font-mono">Cargando noticias desde Sanity...</div>
+              ) : noticiasCms.length > 0 ? (
+                noticiasCms.map((n, idx) => (
+                  <div key={n._id || idx} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 rounded uppercase">
+                      {n.categoria || 'OFICIAL'}
+                    </span>
+                    <h3 className="text-xl font-black text-white uppercase">{n.titulo || n.title}</h3>
+                    <p className="text-xs text-zinc-300 leading-relaxed">{n.resumen || n.summary}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 rounded uppercase">
+                    SANTA CRUZ 2026
+                  </span>
+                  <h3 className="text-xl font-black text-white uppercase">Lanzamiento Oficial de la Preventa Bolivia</h3>
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    Apertura de la preventa de la indumentaria oficial para cubrir pasajes y gastos logísticos de la delegación en Santa Cruz de la Sierra.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 8. VISTA: EL RING */}
+        {activeTab === 'elring' && (
+          <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Historial Deportivo</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL RING</h2>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
+                Registro transparente de combates amateur.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {peleasHistorial.map((p) => (
+                <div key={p.id} className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
+                        p.status === 'proximo' ? 'bg-red-950 text-red-400 border border-red-500/30' : 'bg-emerald-950 text-emerald-400'
+                      }`}>
+                        {p.resultado}
+                      </span>
+                      <span className="text-xs font-mono text-zinc-500">{p.fecha}</span>
+                    </div>
+                    <h4 className="text-lg font-black text-white uppercase mt-1">Joel Diaz VS {p.rival}</h4>
+                    <p className="text-xs text-zinc-400">{p.lugar} • {p.categoria}</p>
+                  </div>
+
+                  <div className="text-left sm:text-right">
+                    <span className="text-xs font-bold text-yellow-400 uppercase block">{p.metodo}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 9. VISTA: LA HISTORIA */}
+        {activeTab === 'historia' && (
+          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Cronología Deportivo</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">LA HISTORIA</h2>
+            </div>
+
+            <div className="space-y-6 border-l-2 border-yellow-400 pl-6">
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-yellow-400 font-mono">2026 — ETAPA ACTUAL</span>
+                <h3 className="text-xl font-black text-white uppercase">Operación Santa Cruz</h3>
+                <p className="text-xs text-zinc-400">Inicio de la autogestión internacional y campamento deportivo en altura.</p>
+              </div>
+
+              <div className="space-y-1 pt-4">
+                <span className="text-xs font-bold text-zinc-500 font-mono">2025</span>
+                <h3 className="text-xl font-black text-white uppercase">Consolidación en Gimnasio IMAD</h3>
+                <p className="text-xs text-zinc-400">Temporada de combates amateur y estructuración del equipo de trabajo.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 10. VISTA: EL LEÓN SE FINANCIA */}
+        {activeTab === 'financiacion' && (
+          <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Sistema Autogestionado</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL LEÓN SE FINANCIA</h2>
+            </div>
+
+            <div className="bg-zinc-950 border border-yellow-500/30 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Utensils className="w-5 h-5 text-yellow-400" />
+                <h3 className="text-xl font-black text-white uppercase">Acciones Puntuales de Recaudación</h3>
+              </div>
+              {accionesTemporales.map((acc) => (
+                <div key={acc.id} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <h4 className="text-lg font-black text-white uppercase">{acc.title}</h4>
+                    <p className="text-xs text-zinc-400">{acc.descripcion}</p>
+                  </div>
+                  <button
+                    onClick={() => createComidaWhatsapp(acc)}
+                    className="bg-yellow-400 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase"
+                  >
+                    Encargar por WhatsApp
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 11. VISTA: ALIADOS */}
+        {activeTab === 'aliados' && (
+          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Red de Apoyo</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">ALIADOS Y MARCAS</h2>
+            </div>
+
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 text-center space-y-5">
+              <h3 className="text-2xl font-black text-white uppercase">¿Querés sumarte como Aliado?</h3>
+              <button
+                onClick={createSponsorWhatsapp}
+                className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-8 py-3.5 rounded-xl text-xs uppercase tracking-wider"
+              >
+                QUIERO SER ALIADO — HABLAR POR WHATSAPP
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 12. VISTA: LA MANADA */}
+        {activeTab === 'lamanada' && (
+          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Comunidad Oficial</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">LA MANADA</h2>
+            </div>
+
+            <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-yellow-500/30 rounded-2xl p-8 text-center space-y-5">
+              <h3 className="text-2xl font-black text-white uppercase">Acceso Privado</h3>
+              <a
+                href={whatsappChannelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3.5 rounded-xl text-xs uppercase tracking-wider"
+              >
+                <MessageCircle className="w-4 h-4 fill-black" /> QUIERO ENTRAR A LA MANADA
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* 13. VISTA: EL ARCHIVO */}
+        {activeTab === 'archivo' && (
+          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Memoria Histórica</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL ARCHIVO</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl">
+                <span className="text-xs font-bold text-yellow-400 block font-mono">2026</span>
+                <h4 className="text-lg font-black text-white uppercase mt-1">Lanzamiento del Universo Digital</h4>
+                <p className="text-xs text-zinc-400">Integración de catálogo autogestionado, clases online y bitácora audiovisual.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
+
+      {/* FOOTER */}
+      <footer className="border-t border-zinc-900 py-8 px-4 text-center text-xs text-zinc-600 space-y-2 mt-16">
+        <p className="font-bold text-zinc-400">EL LEÓN — JOEL DIAZ (@joelbox_)</p>
+        <p>Santo Tomé / Rosario, Argentina • 2026</p>
+      </footer>
+
     </div>
-  )
+  );
 }
