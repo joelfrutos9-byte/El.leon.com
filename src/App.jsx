@@ -1,3 +1,4 @@
+import CalculadoraNutricional from './CalculadoraNutricional';
 import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
