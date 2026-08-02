@@ -55,7 +55,7 @@ export default function App() {
   const SANITY_DATASET = 'production';
 
   useEffect(() => {
-    // Cargar noticias desde Sanity (fallback o CMS)
+    // Cargar noticias desde Sanity
     const query = encodeURIComponent('*[_type in ["noticia", "post"]] | order(_createdAt desc)');
     const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${query}`;
 
@@ -102,11 +102,10 @@ export default function App() {
     }
   };
 
-  // Estructura completa de menú por categorías con las nuevas pestañas integradas
+  // Menú público sin botón llamativo de admin (se deja una opción discreta)
   const menuItems = [
     { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
     { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
-    { id: 'admin', label: 'Panel Creador', sub: 'Acceso Exclusivo PIN', icon: Shield, badge: 'ADMIN' },
     { id: 'boxeador', label: 'El Boxeador', sub: 'Perfil de Joel Diaz', icon: UserCheck },
     { id: 'tienda', label: 'León Store', sub: 'Indumentaria & Merch', icon: ShoppingBag, badge: 'TIENDA' },
     { id: 'elcamino', label: 'El Camino', sub: 'Docuseries & Bitácora', icon: Tv },
@@ -116,7 +115,8 @@ export default function App() {
     { id: 'financiacion', label: 'El León se Financia', sub: 'Hub de Autogestión', icon: DollarSign },
     { id: 'aliados', label: 'Aliados', sub: 'Marcas & Sponsors', icon: Award },
     { id: 'lamanada', label: 'La Manada', sub: 'Comunidad WhatsApp', icon: Users },
-    { id: 'archivo', label: 'El Archivo', sub: 'Memoria Histórica', icon: Layers }
+    { id: 'archivo', label: 'El Archivo', sub: 'Memoria Histórica', icon: Layers },
+    { id: 'admin', label: 'Acceso Creador', sub: 'Gestión Privada (PIN)', icon: Lock, badge: 'PRIVADO' }
   ];
 
   // Productos León Store
@@ -160,7 +160,7 @@ export default function App() {
       image: '/1785148947849.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Buzo pesado con capucha doble, puños reforzados y estampado táctico de alto impacto en espalda.',
+      description: 'Buzo pesado con capucha doble, puños reinforced y estampado táctico de alto impacto en espalda.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     },
     {
@@ -179,7 +179,7 @@ export default function App() {
     }
   ];
 
-  // Acciones puntuales de financiación (comida / eventos temporales)
+  // Acciones puntuales de financiación
   const accionesTemporales = [
     {
       id: 'empanadas-tanda-1',
@@ -330,9 +330,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* TABS SUPERIORES RÁPIDAS (ACCESO DIRECTO) */}
+        {/* TABS SUPERIORES RÁPIDAS (Solo las principales públicas) */}
         <div className="max-w-6xl mx-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {menuItems.slice(0, 6).map(item => {
+          {menuItems.slice(0, 5).map(item => {
             const IconComponent = item.icon;
             const isSelected = activeTab === item.id;
             return (
@@ -520,32 +520,28 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. NUEVA VISTA: CLASES & RUTINAS (DINÁMICO DESDE SUPABASE) */}
+        {/* 2. VISTA: CLASES & RUTINAS (PÚBLICA Y LIMPIA) */}
         {activeTab === 'clases' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
               <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Centro de Entrenamiento</span>
               <h2 className="text-3xl font-black text-white uppercase tracking-tight">CLASES & RUTINAS</h2>
               <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                Accedé a los videos de técnica, entrenamientos y material exclusivo subidos desde el Panel Creador.
+                Accedé a los videos de técnica, entrenamientos y material exclusivo.
               </p>
             </div>
 
             {cargandoPosts ? (
               <div className="text-center text-xs text-zinc-500 py-12 font-mono">
-                Cargando entrenamientos desde Supabase...
+                Cargando entrenamientos...
               </div>
             ) : posts.length === 0 ? (
               <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 text-center space-y-3">
                 <Sparkles className="w-8 h-8 text-yellow-400 mx-auto" />
-                <h3 className="text-lg font-black text-white uppercase">Todavía no hay publicaciones cargadas</h3>
-                <p className="text-xs text-zinc-400">Ingresá al "Panel Creador" en el menú con tu PIN para subir tu primer video o rutina.</p>
-                <button
-                  onClick={() => handleSelectTab('admin')}
-                  className="bg-yellow-400 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase"
-                >
-                  Ir al Panel Creador
-                </button>
+                <h3 className="text-lg font-black text-white uppercase">Próximamente nuevos contenidos</h3>
+                <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                  Estamos preparando rutinas, clases técnicas de boxeo y material audiovisual exclusivo. ¡Atentos a las próximas publicaciones!
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -618,7 +614,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. NUEVA VISTA: PANEL CREADOR (CON PIN 0811) */}
+        {/* 3. VISTA: PANEL CREADOR (ACCESO PROTEGIDO CON PIN 0811) */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
             <Admin />
@@ -1035,4 +1031,4 @@ export default function App() {
 
     </div>
   );
-}
+          }
