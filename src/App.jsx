@@ -29,11 +29,13 @@ import {
   Activity,
   Key,
   CheckCircle2,
-  Search
+  Search,
+  Timer
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
 import CalculadoraNutricional from './CalculadoraNutricional';
+import TabataTimer from './componentes/TabataTimer';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('mision');
@@ -118,7 +120,7 @@ export default function App() {
       setPosts(data || []);
     } catch (err) {
       console.log("Error cargando contenidos públicos:", err.message);
-    } finally {
+    } fontally {
       setCargandoPosts(false);
     }
   };
@@ -189,12 +191,13 @@ export default function App() {
   const menuItems = [
     { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
     { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
+    { id: 'timer', label: 'Timer Boxeo', sub: 'Reloj de Ring & Tabata', icon: Timer, badge: 'PRO' },
     { id: 'boxeador', label: 'El Boxeador', sub: 'Perfil de Joel Diaz', icon: UserCheck },
     { id: 'tienda', label: 'León Store', sub: 'Indumentaria & Merch', icon: ShoppingBag, badge: 'TIENDA' },
     { id: 'elcamino', label: 'El Camino', sub: 'Docuseries & Bitácora', icon: Tv },
     { id: 'noticias', label: 'Noticias', sub: 'Medio Oficial', icon: Newspaper },
     { id: 'elring', label: 'El Ring', sub: 'Historial Deportivo', icon: Trophy },
-    { id: 'historia', label: 'La Historia', sub: 'Cronología Deportiva', icon: History },
+    { id: 'historia', label: 'La Historia', sub: 'Cronología Deportivo', icon: History },
     { id: 'financiacion', label: 'El León se Financia', sub: 'Hub de Autogestión', icon: DollarSign },
     { id: 'aliados', label: 'Aliados', sub: 'Marcas & Sponsors', icon: Award },
     { id: 'lamanada', label: 'La Manada', sub: 'Comunidad WhatsApp', icon: Users },
@@ -418,7 +421,7 @@ export default function App() {
 
         {/* TABS SUPERIORES RÁPIDAS */}
         <div className="max-w-6xl mx-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {menuItems.slice(0, 5).map(item => {
+          {menuItems.slice(0, 6).map(item => {
             const IconComponent = item.icon;
             const isSelected = activeTab === item.id;
             return (
@@ -551,6 +554,12 @@ export default function App() {
                     className="bg-yellow-400 text-black font-black px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:bg-yellow-300 transition-all flex items-center justify-center gap-2"
                   >
                     <Dumbbell className="w-4 h-4" /> Ver Clases & Rutinas
+                  </button>
+                  <button 
+                    onClick={() => handleSelectTab('timer')}
+                    className="bg-zinc-900 border border-yellow-500/40 text-yellow-400 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Timer className="w-4 h-4" /> Abrir Timer Boxeo
                   </button>
                   <button 
                     onClick={() => handleSelectTab('tienda')}
@@ -891,14 +900,29 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. VISTA: PANEL CREADOR SECRETO (ACCESO CON 3 CLICKS EN EL LOGO + PIN 0811) */}
+        {/* 3. VISTA: TIMER BOXEO / TABATA */}
+        {activeTab === 'timer' && (
+          <div className="space-y-6 max-w-xl mx-auto animate-fade-in py-4">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Herramienta de Ring</span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">CRONÓMETRO DE RING & TABATA</h2>
+              <p className="text-xs text-zinc-400 max-w-md mx-auto">
+                Reloj con sonido sintetizado de campana de acero para tus rounds de boxeo, sparring o trabajo fraccionado.
+              </p>
+            </div>
+
+            <TabataTimer />
+          </div>
+        )}
+
+        {/* 4. VISTA: PANEL CREADOR SECRETO (ACCESO CON 3 CLICKS EN EL LOGO + PIN 0811) */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
             <Admin />
           </div>
         )}
 
-        {/* 4. VISTA: EL BOXEADOR */}
+        {/* 5. VISTA: EL BOXEADOR */}
         {activeTab === 'boxeador' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -950,7 +974,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 5. VISTA: LEÓN STORE */}
+        {/* 6. VISTA: LEÓN STORE */}
         {activeTab === 'tienda' && (
           <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -1058,7 +1082,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 6. VISTA: EL CAMINO */}
+        {/* 7. VISTA: EL CAMINO */}
         {activeTab === 'elcamino' && (
           <div className="space-y-8 animate-fade-in">
             <div className="text-center space-y-2">
@@ -1111,7 +1135,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 7. VISTA: NOTICIAS */}
+        {/* 8. VISTA: NOTICIAS */}
         {activeTab === 'noticias' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1147,7 +1171,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 8. VISTA: EL RING */}
+        {/* 9. VISTA: EL RING */}
         {activeTab === 'elring' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1183,7 +1207,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 9. VISTA: LA HISTORIA */}
+        {/* 10. VISTA: LA HISTORIA */}
         {activeTab === 'historia' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1207,7 +1231,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 10. VISTA: EL LEÓN SE FINANCIA */}
+        {/* 11. VISTA: EL LEÓN SE FINANCIA */}
         {activeTab === 'financiacion' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1238,7 +1262,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 11. VISTA: ALIADOS */}
+        {/* 12. VISTA: ALIADOS */}
         {activeTab === 'aliados' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1258,7 +1282,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 12. VISTA: LA MANADA */}
+        {/* 13. VISTA: LA MANADA */}
         {activeTab === 'lamanada' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1280,7 +1304,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 13. VISTA: EL ARCHIVO */}
+        {/* 14. VISTA: EL ARCHIVO */}
         {activeTab === 'archivo' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1292,7 +1316,7 @@ export default function App() {
               <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl">
                 <span className="text-xs font-bold text-yellow-400 block font-mono">2026</span>
                 <h4 className="text-lg font-black text-white uppercase mt-1">Lanzamiento del Universo Digital</h4>
-                <p className="text-xs text-zinc-400">Integración de catálogo autogestionado, clases online y bitácora audiovisual.</p>
+                <p className="text-xs text-zinc-400">Integración de catálogo autogestionado, clases online, timer de ring y bitácora audiovisual.</p>
               </div>
             </div>
           </div>
@@ -1308,4 +1332,4 @@ export default function App() {
 
     </div>
   );
-      }
+        }
