@@ -15,6 +15,22 @@
     <meta name="apple-mobile-web-app-title" content="El León" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
+    <!-- OneSignal Web Push SDK -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "04370906-db6c-4e7d-9655-2f0dab766e4a",
+          safari_web_id: "web.onesignal.auto.13dd012d-81c7-44d8-8660-15690626d9c4",
+          notifyButton: {
+            enable: true,
+          },
+          allowLocalhostAsSecureOrigin: true, // Permite probar en localhost
+        });
+      });
+    </script>
+
     <title>El León - Joel Díaz</title>
   </head>
   <body class="bg-black text-white">
