@@ -120,7 +120,7 @@ export default function App() {
       setPosts(data || []);
     } catch (err) {
       console.log("Error cargando contenidos públicos:", err.message);
-    } fontally {
+    } finally {
       setCargandoPosts(false);
     }
   };
@@ -197,7 +197,7 @@ export default function App() {
     { id: 'elcamino', label: 'El Camino', sub: 'Docuseries & Bitácora', icon: Tv },
     { id: 'noticias', label: 'Noticias', sub: 'Medio Oficial', icon: Newspaper },
     { id: 'elring', label: 'El Ring', sub: 'Historial Deportivo', icon: Trophy },
-    { id: 'historia', label: 'La Historia', sub: 'Cronología Deportivo', icon: History },
+    { id: 'historia', label: 'La Historia', sub: 'Cronología Deportiva', icon: History },
     { id: 'financiacion', label: 'El León se Financia', sub: 'Hub de Autogestión', icon: DollarSign },
     { id: 'aliados', label: 'Aliados', sub: 'Marcas & Sponsors', icon: Award },
     { id: 'lamanada', label: 'La Manada', sub: 'Comunidad WhatsApp', icon: Users },
@@ -602,7 +602,7 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-zinc-900">
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">1. Producción Textil</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre estrictamente el costo de confección.</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre strictly el costo de confección.</p>
                 </div>
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">2. Logística & Traslado</span>
@@ -1211,7 +1211,7 @@ export default function App() {
         {activeTab === 'historia' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Cronología Deportivo</span>
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Cronología Deportiva</span>
               <h2 className="text-3xl font-black text-white uppercase tracking-tight">LA HISTORIA</h2>
             </div>
 
@@ -1332,4 +1332,4 @@ export default function App() {
 
     </div>
   );
-        }
+    }
