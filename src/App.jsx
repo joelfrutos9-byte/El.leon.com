@@ -30,12 +30,16 @@ import {
   Key,
   CheckCircle2,
   Search,
-  Timer
+  Timer,
+  User,
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
 import CalculadoraNutricional from './CalculadoraNutricional';
 import TabataTimer from './componentes/TabataTimer';
+import AuthModal from './componentes/AuthModal';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('mision');
@@ -44,6 +48,11 @@ export default function App() {
   const [selectedSize, setSelectedSize] = useState({});
   const [noticiasCms, setNoticiasCms] = useState([]);
   const [cargandoNoticias, setCargandoNoticias] = useState(true);
+
+  // Estados de Sesión y Autenticación
+  const [session, setSession] = useState(null);
+  const [userRole, setUserRole] = useState('alumno');
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   // Estados para Clases / Contenido dinámico de Supabase
   const [posts, setPosts] = useState([]);
@@ -80,6 +89,18 @@ export default function App() {
   const SANITY_DATASET = 'production';
 
   useEffect(() => {
+    // Escuchar cambios de sesión en Supabase
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchUserProfile(session.user.id);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchUserProfile(session.user.id);
+      else setUserRole('alumno');
+    });
+
     // Detectar si se entra con URL secreta ?admin=true
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get('admin') === 'true') {
@@ -105,7 +126,29 @@ export default function App() {
 
     // Cargar sólo posts públicos de Supabase para el catálogo general
     fetchPublicPosts();
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  // Consultar el rol del usuario en la tabla profiles
+  const fetchUserProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('rol')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      if (data && data.rol) setUserRole(data.rol);
+    } catch (err) {
+      console.log('Perfil no encontrado o aún no creado:', err.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const fetchPublicPosts = async () => {
     try {
@@ -187,11 +230,12 @@ export default function App() {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // MENÚ 100% PÚBLICO
+  // MENÚ PÚBLICO / ADAPTATIVO
   const menuItems = [
     { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
     { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
     { id: 'timer', label: 'Timer Boxeo', sub: 'Reloj de Ring & Tabata', icon: Timer, badge: 'PRO' },
+    ...(userRole === 'profesor' ? [{ id: 'admin', label: 'Panel Creador', sub: 'Gestión & Rutinas', icon: ShieldCheck, badge: 'ADMIN' }] : []),
     { id: 'boxeador', label: 'El Boxeador', sub: 'Perfil de Joel Diaz', icon: UserCheck },
     { id: 'tienda', label: 'León Store', sub: 'Indumentaria & Merch', icon: ShoppingBag, badge: 'TIENDA' },
     { id: 'elcamino', label: 'El Camino', sub: 'Docuseries & Bitácora', icon: Tv },
@@ -396,7 +440,7 @@ export default function App() {
             </span>
           </div>
 
-          {/* ACCIONES SUPERIORES Y BOTÓN MENÚ */}
+          {/* ACCIONES SUPERIORES, LOGIN Y MENÚ */}
           <div className="flex items-center gap-2">
             <a 
               href={instagramUrl}
@@ -407,6 +451,32 @@ export default function App() {
               <Instagram className="w-3.5 h-3.5 text-yellow-400" />
               <span>@joelbox_</span>
             </a>
+
+            {/* BOTÓN SESIÓN / LOGIN */}
+            {session ? (
+              <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
+                <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg border ${
+                  userRole === 'profesor' ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                }`}>
+                  {userRole === 'profesor' ? 'Entrenador' : 'Alumno'}
+                </span>
+                <button 
+                  onClick={handleLogout}
+                  className="p-1.5 text-zinc-400 hover:text-white transition-all"
+                  title="Cerrar Sesión"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthOpen(true)}
+                className="bg-zinc-900 hover:bg-zinc-800 text-yellow-400 font-bold border border-zinc-700 text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all uppercase"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Ingresar</span>
+              </button>
+            )}
 
             {/* BOTÓN MENÚ CELULAR / PANTALLA */}
             <button
@@ -526,6 +596,25 @@ export default function App() {
       {/* VISTAS DE LAS SECCIONES */}
       <main className="max-w-6xl mx-auto px-4 pt-6">
 
+        {/* BANNER INFORMATIVO MODO ENTRENADOR */}
+        {session && userRole === 'profesor' && activeTab !== 'admin' && (
+          <div className="mb-6 bg-yellow-400/10 border border-yellow-400/30 p-4 rounded-2xl flex justify-between items-center gap-3">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-yellow-400 shrink-0" />
+              <div>
+                <h4 className="text-xs font-black text-yellow-400 uppercase">Modo Entrenador Activado</h4>
+                <p className="text-[11px] text-zinc-400">Tenés habilitado el acceso al Panel Creador para crear y supervisar rutinas.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleSelectTab('admin')}
+              className="bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-black px-3 py-1.5 rounded-xl uppercase tracking-wider transition-all whitespace-nowrap"
+            >
+              Ir al Panel
+            </button>
+          </div>
+        )}
+
         {/* 1. VISTA: RUMBO A SANTA CRUZ / INICIO */}
         {activeTab === 'mision' && (
           <div className="space-y-10 animate-fade-in">
@@ -602,7 +691,7 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-zinc-900">
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">1. Producción Textil</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre strictly el costo de confección.</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre estrictamente el costo de confección.</p>
                 </div>
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">2. Logística & Traslado</span>
@@ -915,7 +1004,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. VISTA: PANEL CREADOR SECRETO (ACCESO CON 3 CLICKS EN EL LOGO + PIN 0811) */}
+        {/* 4. VISTA: PANEL CREADOR SECRETO (O DIRECTO SI ES ROL ENTRENADOR) */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
             <Admin />
@@ -1330,6 +1419,12 @@ export default function App() {
         <p>Santo Tomé / Rosario, Argentina • 2026</p>
       </footer>
 
+      {/* MODAL DE AUTENTICACIÓN */}
+      <AuthModal 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
+      />
+
     </div>
   );
-    }
+                }
