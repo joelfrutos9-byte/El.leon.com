@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Settings, Flame, Shield, Volume2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, Shield } from 'lucide-react';
 
 export default function TabataTimer() {
-  // Configuración
-  const [workTime, setWorkTime] = useState(180); // Segundos de trabajo (default 3 min)
-  const [restTime, setRestTime] = useState(60);   // Segundos de descanso (default 1 min)
-  const [totalRounds, setTotalRounds] = useState(12); // Total de rounds por set
-  const [totalSets, setTotalSets] = useState(1);      // Vueltas / Sets totales
-  const [setRestTime, setSetRestTime] = useState(60);  // Descanso entre sets/vueltas
+  // Configuración de tiempos
+  const [workTime, setWorkTime] = useState(180);         // Segundos de trabajo (default 3 min)
+  const [restTime, setRestTime] = useState(60);           // Segundos de descanso (default 1 min)
+  const [totalRounds, setTotalRounds] = useState(12);     // Total de rounds por set
+  const [totalSets, setTotalSets] = useState(1);          // Vueltas / Sets totales
+  const [betweenSetRest, setBetweenSetRest] = useState(60); // Descanso entre sets/vueltas
 
   // Estados dinámicos de ejecución
   const [currentRound, setCurrentRound] = useState(1);
@@ -90,7 +90,7 @@ export default function TabataTimer() {
               // Descanso entre sets/vueltas
               playBellSound();
               setStatus('SET_REST');
-              return setRestTime;
+              return betweenSetRest;
             }
           } else {
             // Descanso de round regular
@@ -116,7 +116,7 @@ export default function TabataTimer() {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [isRunning, status, currentRound, currentSet, totalRounds, totalSets, workTime, restTime, setRestTime]);
+  }, [isRunning, status, currentRound, currentSet, totalRounds, totalSets, workTime, restTime, betweenSetRest]);
 
   const startTimer = () => {
     if (status === 'IDLE' || status === 'FINISHED') {
@@ -139,7 +139,7 @@ export default function TabataTimer() {
     setTimeLeft(workTime);
   };
 
-  // presets rápidos
+  // Presets rápidos
   const applyPresetPro12 = () => {
     setIsRunning(false);
     setStatus('IDLE');
@@ -259,8 +259,8 @@ export default function TabataTimer() {
               <label className="text-zinc-400 block mb-1 font-bold">Descanso entre Vueltas (seg):</label>
               <input
                 type="number"
-                value={setRestTime}
-                onChange={(e) => setSetRestTime(Math.max(0, parseInt(e.target.value) || 0))}
+                value={betweenSetRest}
+                onChange={(e) => setBetweenSetRest(Math.max(0, parseInt(e.target.value) || 0))}
                 className="w-full bg-black border border-zinc-700 rounded-lg p-2 text-white font-bold focus:border-yellow-400 focus:outline-none"
               />
             </div>
