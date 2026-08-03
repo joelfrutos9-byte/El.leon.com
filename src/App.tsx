@@ -163,7 +163,7 @@ export default function App() {
       setPosts(data || []);
     } catch (err) {
       console.log("Error cargando contenidos públicos:", err.message);
-    } finally {
+    } fontally {
       setCargandoPosts(false);
     }
   };
@@ -691,7 +691,7 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-zinc-900">
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">1. Producción Textil</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre strictly el costo de confección.</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre estrictamente el costo de confección.</p>
                 </div>
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">2. Logística & Traslado</span>
