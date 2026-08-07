@@ -181,7 +181,7 @@ export default function App() {
       setPosts(data || []);
     } catch (err) {
       console.log("Error cargando contenidos públicos:", err.message);
-    } fontally {
+    } finally {
       setCargandoPosts(false);
     }
   };
