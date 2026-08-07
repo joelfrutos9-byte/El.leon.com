@@ -20,7 +20,6 @@ import {
   ChevronRight,
   Dumbbell,
   Layers,
-  Sparkles,
   Lock,
   PlayCircle,
   FileText,
@@ -54,7 +53,7 @@ export default function App() {
   const [userRole, setUserRole] = useState('alumno');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  // Estados para Clases / Contenido dinámico de Supabase
+  // Estados para Clases / Contenido dinámico
   const [posts, setPosts] = useState([]);
   const [cargandoPosts, setCargandoPosts] = useState(true);
 
@@ -65,7 +64,7 @@ export default function App() {
   const [searchingStudent, setSearchingStudent] = useState(false);
   const [studentSearched, setStudentSearched] = useState(false);
 
-  // Estado para desplegar el formulario de rutina personalizada
+  // Formulario de rutina personalizada
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -78,7 +77,7 @@ export default function App() {
     lesiones: 'Ninguna'
   });
 
-  // Truco secreto para abrir el panel de Admin (3 clicks en el Logo "EL LEÓN")
+  // Acceso rápido al panel Admin (3 clics en el logo "EL LEÓN")
   const [logoClicks, setLogoClicks] = useState(0);
 
   const whatsappNumber = "5493425236731";
@@ -89,7 +88,6 @@ export default function App() {
   const SANITY_DATASET = 'production';
 
   useEffect(() => {
-    // Escuchar cambios de sesión en Supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) fetchUserProfile(session.user.id);
@@ -101,13 +99,11 @@ export default function App() {
       else setUserRole('alumno');
     });
 
-    // Detectar si se entra con URL secreta ?admin=true
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get('admin') === 'true') {
       setActiveTab('admin');
     }
 
-    // Cargar noticias desde Sanity
     const query = encodeURIComponent('*[_type in ["noticia", "post"]] | order(_createdAt desc)');
     const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${query}`;
 
@@ -124,13 +120,11 @@ export default function App() {
         setCargandoNoticias(false);
       });
 
-    // Cargar sólo posts públicos de Supabase para el catálogo general
     fetchPublicPosts();
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Consultar el rol del usuario en la tabla profiles
   const fetchUserProfile = async (userId) => {
     try {
       const { data, error } = await supabase
@@ -163,12 +157,11 @@ export default function App() {
       setPosts(data || []);
     } catch (err) {
       console.log("Error cargando contenidos públicos:", err.message);
-    } finally {
+    } fontally {
       setCargandoPosts(false);
     }
   };
 
-  // Buscar contenido privado por Clave de Alumno
   const handleSearchStudentKey = async (e) => {
     e.preventDefault();
     if (!studentKey.trim()) return;
@@ -195,7 +188,6 @@ export default function App() {
     }
   };
 
-  // Función secreta: Tocás 3 veces seguidas el logo EL LEÓN y te abre el Panel
   const handleLogoClick = () => {
     const newCount = logoClicks + 1;
     setLogoClicks(newCount);
@@ -208,7 +200,6 @@ export default function App() {
     }
   };
 
-  // Envío del Formulario de Rutina Personalizada a WhatsApp
   const handleSendCustomForm = (e) => {
     e.preventDefault();
     if (!formData.nombre.trim() || !formData.edad.trim()) {
@@ -230,7 +221,6 @@ export default function App() {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // MENÚ PÚBLICO / ADAPTATIVO
   const menuItems = [
     { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
     { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
@@ -248,7 +238,6 @@ export default function App() {
     { id: 'archivo', label: 'El Archivo', sub: 'Memoria Histórica', icon: Layers }
   ];
 
-  // Productos León Store
   const products = [
     {
       id: 'original-01',
@@ -308,7 +297,6 @@ export default function App() {
     }
   ];
 
-  // Acciones puntuales de financiación
   const accionesTemporales = [
     {
       id: 'empanadas-tanda-1',
@@ -321,7 +309,6 @@ export default function App() {
     }
   ];
 
-  // Docuseries
   const episodiosDocu = [
     {
       id: 'ep-01',
@@ -345,7 +332,6 @@ export default function App() {
     }
   ];
 
-  // Historial Deportivo
   const peleasHistorial = [
     {
       id: 'p-01',
@@ -428,7 +414,6 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           
-          {/* LOGO EL LEÓN (3 CLICKS SEGUIDOS PARA MODO ADMIN) */}
           <div 
             className="flex items-center gap-2.5 cursor-pointer select-none" 
             onClick={handleLogoClick}
@@ -440,7 +425,6 @@ export default function App() {
             </span>
           </div>
 
-          {/* ACCIONES SUPERIORES, LOGIN Y MENÚ */}
           <div className="flex items-center gap-2">
             <a 
               href={instagramUrl}
@@ -452,7 +436,6 @@ export default function App() {
               <span>@joelbox_</span>
             </a>
 
-            {/* BOTÓN SESIÓN / LOGIN */}
             {session ? (
               <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
                 <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg border ${
@@ -478,7 +461,6 @@ export default function App() {
               </button>
             )}
 
-            {/* BOTÓN MENÚ CELULAR / PANTALLA */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-black px-3.5 py-1.5 rounded-xl text-xs uppercase tracking-wider transition-all"
@@ -489,7 +471,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* TABS SUPERIORES RÁPIDAS */}
         <div className="max-w-6xl mx-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {menuItems.slice(0, 6).map(item => {
             const IconComponent = item.icon;
@@ -518,7 +499,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* MENÚ DESPLEGABLE EN PANTALLA COMPLETA */}
+      {/* MENÚ COMPLETO */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-6 overflow-y-auto animate-fade-in">
           <div>
@@ -578,7 +559,7 @@ export default function App() {
         </div>
       )}
 
-      {/* TITULAR DE SECCIÓN ACTUAL */}
+      {/* TITULAR DE SECCIÓN */}
       <div className="bg-zinc-950 border-b border-zinc-900 py-3 px-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-zinc-400">
           <div className="flex items-center gap-2">
@@ -593,10 +574,9 @@ export default function App() {
         </div>
       </div>
 
-      {/* VISTAS DE LAS SECCIONES */}
+      {/* SECCIONES DE CONTENIDO */}
       <main className="max-w-6xl mx-auto px-4 pt-6">
 
-        {/* BANNER INFORMATIVO MODO ENTRENADOR */}
         {session && userRole === 'profesor' && activeTab !== 'admin' && (
           <div className="mb-6 bg-yellow-400/10 border border-yellow-400/30 p-4 rounded-2xl flex justify-between items-center gap-3">
             <div className="flex items-center gap-3">
@@ -615,7 +595,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. VISTA: RUMBO A SANTA CRUZ / INICIO */}
+        {/* 1. INICIO / MISIÓN ACTIVA */}
         {activeTab === 'mision' && (
           <div className="space-y-10 animate-fade-in">
             <section className="relative rounded-3xl overflow-hidden border border-zinc-800 p-6 sm:p-12 text-center bg-zinc-950">
@@ -660,7 +640,6 @@ export default function App() {
               </div>
             </section>
 
-            {/* TABLERO DE MISIÓN ACTIVA */}
             <section className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-2xl space-y-5">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
@@ -691,7 +670,7 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-zinc-900">
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">1. Producción Textil</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre strictly el costo de confección.</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre estrictamente el costo de confección.</p>
                 </div>
                 <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
                   <span className="text-xs font-bold text-yellow-400 block uppercase">2. Logística & Traslado</span>
@@ -706,7 +685,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. VISTA: CLASES & RUTINAS (+ PORTAL DE ALUMNO + FORMULARIO + CALCULADORA NUTRICIONAL PÚBLICA) */}
+        {/* 2. CLASES & RUTINAS */}
         {activeTab === 'clases' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -717,12 +696,10 @@ export default function App() {
               </p>
             </div>
 
-            {/* CALCULADORA NUTRICIONAL PÚBLICA Y GRATUITA */}
             <div>
               <CalculadoraNutricional />
             </div>
 
-            {/* BUSCADOR PRIVADO DE ALUMNO */}
             <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-4">
               <div className="flex items-center gap-2">
                 <Key className="w-5 h-5 text-yellow-400" />
@@ -750,7 +727,6 @@ export default function App() {
                 </button>
               </form>
 
-              {/* RESULTADO DE BÚSQUEDA DE ALUMNO */}
               {studentSearched && (
                 <div className="pt-4 border-t border-zinc-900 animate-fade-in">
                   {studentPosts.length > 0 ? (
@@ -801,7 +777,6 @@ export default function App() {
               )}
             </div>
 
-            {/* SECCIÓN DESTACADA: PEDIR RUTINA PERSONALIZADA */}
             <div className="bg-gradient-to-br from-zinc-900 via-zinc-950 to-black border border-yellow-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">
@@ -823,7 +798,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* FORMULARIO DESPLEGABLE */}
               {showCustomForm && (
                 <form onSubmit={handleSendCustomForm} className="pt-6 border-t border-zinc-800 space-y-4 animate-fade-in">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -945,7 +919,6 @@ export default function App() {
               )}
             </div>
 
-            {/* CATALOGO PÚBLICO GENERAL */}
             {posts.length > 0 && (
               <div className="space-y-4 pt-4">
                 <h3 className="text-xl font-black text-white uppercase flex items-center gap-2">
@@ -989,7 +962,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. VISTA: TIMER BOXEO / TABATA */}
+        {/* 3. TIMER BOXEO */}
         {activeTab === 'timer' && (
           <div className="space-y-6 max-w-xl mx-auto animate-fade-in py-4">
             <div className="text-center space-y-2">
@@ -1004,14 +977,14 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. VISTA: PANEL CREADOR SECRETO (O DIRECTO SI ES ROL ENTRENADOR) */}
+        {/* 4. PANEL CREADOR ADMIN */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
             <Admin />
           </div>
         )}
 
-        {/* 5. VISTA: EL BOXEADOR */}
+        {/* 5. EL BOXEADOR */}
         {activeTab === 'boxeador' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1063,7 +1036,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 6. VISTA: LEÓN STORE */}
+        {/* 6. LEÓN STORE */}
         {activeTab === 'tienda' && (
           <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -1171,7 +1144,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 7. VISTA: EL CAMINO */}
+        {/* 7. EL CAMINO */}
         {activeTab === 'elcamino' && (
           <div className="space-y-8 animate-fade-in">
             <div className="text-center space-y-2">
@@ -1224,7 +1197,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 8. VISTA: NOTICIAS */}
+        {/* 8. NOTICIAS */}
         {activeTab === 'noticias' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1260,7 +1233,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 9. VISTA: EL RING */}
+        {/* 9. EL RING */}
         {activeTab === 'elring' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1296,7 +1269,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 10. VISTA: LA HISTORIA */}
+        {/* 10. LA HISTORIA */}
         {activeTab === 'historia' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1320,7 +1293,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 11. VISTA: EL LEÓN SE FINANCIA */}
+        {/* 11. EL LEÓN SE FINANCIA */}
         {activeTab === 'financiacion' && (
           <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1351,7 +1324,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 12. VISTA: ALIADOS */}
+        {/* 12. ALIADOS */}
         {activeTab === 'aliados' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1371,7 +1344,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 13. VISTA: LA MANADA */}
+        {/* 13. LA MANADA */}
         {activeTab === 'lamanada' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1393,7 +1366,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 14. VISTA: EL ARCHIVO */}
+        {/* 14. EL ARCHIVO */}
         {activeTab === 'archivo' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
