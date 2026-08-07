@@ -87,7 +87,7 @@ export default function App() {
   const [searchingStudent, setSearchingStudent] = useState(false);
   const [studentSearched, setStudentSearched] = useState(false);
 
-  // Formulario de Diagnóstico / Rutina Personalizada
+  // Formulario de Diagnóstico Completo / Rutina Personalizada
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -181,7 +181,7 @@ export default function App() {
       setPosts(data || []);
     } catch (err) {
       console.log("Error cargando contenidos públicos:", err.message);
-    } finally {
+    } fontally {
       setCargandoPosts(false);
     }
   };
@@ -231,16 +231,16 @@ export default function App() {
       return;
     }
 
-    const msg = `🥊 *FICHA DE EVALUACIÓN — RUTINA PERSONALIZADA* 🥊\n\n` +
+    const msg = `🥊 *FICHA DE EVALUACIÓN FÍSICA COMPLETA* 🥊\n\n` +
       `👤 *Nombre:* ${formData.nombre}\n` +
       `🎂 *Edad:* ${formData.edad} años\n` +
-      `📍 *Ciudad:* ${formData.ciudad || 'No especificada'}\n\n` +
+      `📍 *Ciudad/Localidad:* ${formData.ciudad || 'No especificada'}\n\n` +
       `🎯 *Objetivo Principal:* ${formData.objetivo}\n` +
       `📊 *Nivel de Experiencia:* ${formData.nivel}\n` +
-      `📅 *Disponibilidad:* ${formData.diasDisponibles}\n` +
+      `📅 *Disponibilidad Semanal:* ${formData.diasDisponibles}\n` +
       `🏋️ *Lugar de Entrenamiento:* ${formData.lugar}\n` +
       `⚠️ *Lesiones/Molestias:* ${formData.lesiones}\n\n` +
-      `¡Hola Joel! Te envío mi ficha completada desde la App para consultar por mi plan personalizado.`;
+      `¡Hola Joel! Te envío mi ficha diagnóstica completada desde la App para consultar por mi plan a medida.`;
 
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
   };
@@ -367,10 +367,7 @@ export default function App() {
       `Saldo contra entrega: ${formatCurrency(balanceCalc)}\n\n` +
       `Colección:\n${coleccionLabel}`;
 
-    // Abrir WhatsApp con el número asignado
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
-    
-    // Avanzar a la pantalla de confirmación y datos de seña
     setCheckoutStep('transferencia');
   };
 
@@ -1238,40 +1235,144 @@ export default function App() {
               )}
             </div>
 
-            {/* EVALUACIÓN FÍSICA PERSONALIZADA */}
-            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-black text-white uppercase">Pedí tu Plan Personalizado</h3>
+            {/* EVALUACIÓN FÍSICA PERSONALIZADA COMPLETA */}
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-900 pb-4">
+                <div>
+                  <h3 className="text-xl font-black text-white uppercase">PEDÍ TU PLAN PERSONALIZADO</h3>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Completá tu ficha física para recibir un programa técnico y físico adecuado a tus metas.
+                  </p>
+                </div>
                 <button
                   onClick={() => setShowCustomForm(!showCustomForm)}
-                  className="bg-yellow-400 text-black font-black px-4 py-2 rounded-xl text-xs uppercase"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all"
                 >
-                  {showCustomForm ? 'Cerrar' : 'Completar Ficha'}
+                  {showCustomForm ? 'CERRAR FICHA' : 'COMPLETAR FICHA'}
                 </button>
               </div>
 
               {showCustomForm && (
-                <form onSubmit={handleSendCustomForm} className="pt-4 border-t border-zinc-800 space-y-4 text-xs">
+                <form onSubmit={handleSendCustomForm} className="space-y-4 text-xs animate-fade-in">
+                  
+                  {/* FILA 1: DATOS PERSONALES */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block font-bold text-zinc-400 uppercase mb-1">Tu Nombre *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: Marcos Pérez"
+                        value={formData.nombre}
+                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-400 uppercase mb-1">Edad *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="Ej: 24"
+                        value={formData.edad}
+                        onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-400 uppercase mb-1">Ciudad / Localidad</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Santo Tomé / Rosario"
+                        value={formData.ciudad}
+                        onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* FILA 2: OBJETIVO Y NIVEL */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-bold text-zinc-400 uppercase mb-1">Objetivo Principal *</label>
+                      <select
+                        value={formData.objetivo}
+                        onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="Aprender Boxeo y Técnica">Aprender Boxeo y Técnica</option>
+                        <option value="Bajar de peso y quemar grasa">Bajar de peso y quemar grasa</option>
+                        <option value="Ganar masa muscular y fuerza">Ganar masa muscular y fuerza</option>
+                        <option value="Preparación Física para Combate">Preparación Física para Combate</option>
+                        <option value="Acondicionamiento físico general">Acondicionamiento físico general</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-400 uppercase mb-1">Nivel de Experiencia *</label>
+                      <select
+                        value={formData.nivel}
+                        onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="Principiante (Desde cero)">Principiante (Desde cero)</option>
+                        <option value="Intermedio (Ya entrené antes)">Intermedio (Ya entrené antes)</option>
+                        <option value="Avanzado (Boxeador / Atleta activo)">Avanzado (Boxeador / Atleta activo)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* FILA 3: DISPONIBILIDAD Y LUGAR */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-bold text-zinc-400 uppercase mb-1">Disponibilidad Semanal *</label>
+                      <select
+                        value={formData.diasDisponibles}
+                        onChange={(e) => setFormData({ ...formData, diasDisponibles: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="2 días por semana">2 días por semana</option>
+                        <option value="3 días por semana">3 días por semana</option>
+                        <option value="4 a 5 días por semana">4 a 5 días por semana</option>
+                        <option value="Todos los días">Todos los días</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-400 uppercase mb-1">¿Dónde vas a entrenar? *</label>
+                      <select
+                        value={formData.lugar}
+                        onChange={(e) => setFormData({ ...formData, lugar: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="En gimnasio tradicional">En gimnasio tradicional</option>
+                        <option value="En casa (sin equipamiento)">En casa (sin equipamiento)</option>
+                        <option value="En casa (con bolsa / mancuernas)">En casa (con bolsa / mancuernas)</option>
+                        <option value="Al aire libre / Parque">Al aire libre / Parque</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* FILA 4: LESIONES */}
+                  <div>
+                    <label className="block font-bold text-zinc-400 uppercase mb-1">Lesiones o Molestias Físicas</label>
                     <input
                       type="text"
-                      required
-                      placeholder="Tu Nombre *"
-                      value={formData.nombre}
-                      onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                      className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white"
-                    />
-                    <input
-                      type="number"
-                      required
-                      placeholder="Edad *"
-                      value={formData.edad}
-                      onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
-                      className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white"
+                      placeholder="Ej: Dolor leve en rodilla derecha, hombro, etc. (O escribí 'Ninguna')"
+                      value={formData.lesiones}
+                      onChange={(e) => setFormData({ ...formData, lesiones: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
                     />
                   </div>
-                  <button type="submit" className="w-full bg-emerald-500 text-black font-black py-3 rounded-xl uppercase">
-                    Enviar Ficha por WhatsApp a Joel
+
+                  <button 
+                    type="submit" 
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
+                  >
+                    <Send className="w-4 h-4 fill-black" />
+                    ENVIAR FICHA POR WHATSAPP A JOEL
                   </button>
                 </form>
               )}
