@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Dumbbell,
   Layers,
+  Sparkles,
   Lock,
   PlayCircle,
   FileText,
@@ -32,7 +33,10 @@ import {
   Timer,
   User,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  Flag,
+  Flame,
+  Sparkle
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
@@ -41,30 +45,49 @@ import TabataTimer from './componentes/TabataTimer';
 import AuthModal from './componentes/AuthModal';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('mision');
+  // Pestañas Principales (5 Módulos Unificados)
+  // 'el-leon' | 'operacion-santa-cruz' | 'leon-store' | 'entrenamiento' | 'actualidad'
+  const [activeTab, setActiveTab] = useState('el-leon');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedStoreCat, setSelectedStoreCat] = useState('todos');
+
+  // Sub-pestañas internas de León Store
+  const [storeSubTab, setStoreSubTab] = useState('catalogo'); // 'catalogo' | 'como-comprar' | 'faq' | 'manada'
+
+  // Flujo de Reserva y Checkout
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState({});
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [checkoutStep, setCheckoutStep] = useState('catalogo'); // 'catalogo' | 'formulario' | 'transferencia'
+
+  // Formulario de Reserva
+  const [buyerForm, setBuyerForm] = useState({
+    nombreApellido: '',
+    dni: '',
+    telefono: '',
+    localidad: ''
+  });
+
+  // CMS y Backend
   const [noticiasCms, setNoticiasCms] = useState([]);
   const [cargandoNoticias, setCargandoNoticias] = useState(true);
 
-  // Estados de Sesión y Autenticación
+  // Sesión y Autenticación
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState('alumno');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  // Estados para Clases / Contenido dinámico
+  // Contenido dinámico de Supabase
   const [posts, setPosts] = useState([]);
   const [cargandoPosts, setCargandoPosts] = useState(true);
 
-  // Portal de Alumno Privado por Clave
+  // Portal de Alumnos por Clave
   const [studentKey, setStudentKey] = useState('');
   const [activeStudentKey, setActiveStudentKey] = useState('');
   const [studentPosts, setStudentPosts] = useState([]);
   const [searchingStudent, setSearchingStudent] = useState(false);
   const [studentSearched, setStudentSearched] = useState(false);
 
-  // Formulario de rutina personalizada
+  // Formulario de Diagnóstico / Rutina Personalizada
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -77,10 +100,10 @@ export default function App() {
     lesiones: 'Ninguna'
   });
 
-  // Acceso rápido al panel Admin (3 clics en el logo "EL LEÓN")
+  // Truco Secreto Admin (3 clics en el logo "EL LEÓN")
   const [logoClicks, setLogoClicks] = useState(0);
 
-  const whatsappNumber = "5493425236731";
+  const whatsappNumber = "5493425236731"; // Placeholder del administrador
   const instagramUrl = "https://instagram.com/joelbox_";
   const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb8f4EU3QxS1ckJsS31A";
 
@@ -104,6 +127,7 @@ export default function App() {
       setActiveTab('admin');
     }
 
+    // Cargar noticias desde Sanity
     const query = encodeURIComponent('*[_type in ["noticia", "post"]] | order(_createdAt desc)');
     const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${query}`;
 
@@ -136,7 +160,7 @@ export default function App() {
       if (error) throw error;
       if (data && data.rol) setUserRole(data.rol);
     } catch (err) {
-      console.log('Perfil no encontrado o aún no creado:', err.message);
+      console.log('Perfil no encontrado:', err.message);
     }
   };
 
@@ -157,7 +181,7 @@ export default function App() {
       setPosts(data || []);
     } catch (err) {
       console.log("Error cargando contenidos públicos:", err.message);
-    } fontally {
+    } finally {
       setCargandoPosts(false);
     }
   };
@@ -221,148 +245,81 @@ export default function App() {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  const menuItems = [
-    { id: 'mision', label: 'Rumbo a Santa Cruz', sub: 'Misión Activa 2026', icon: Zap, badge: 'ACTIVO', highlight: true },
-    { id: 'clases', label: 'Clases & Rutinas', sub: 'Videos & Entrenamientos', icon: Dumbbell, badge: 'NUEVO' },
-    { id: 'timer', label: 'Timer Boxeo', sub: 'Reloj de Ring & Tabata', icon: Timer, badge: 'PRO' },
-    ...(userRole === 'profesor' ? [{ id: 'admin', label: 'Panel Creador', sub: 'Gestión & Rutinas', icon: ShieldCheck, badge: 'ADMIN' }] : []),
-    { id: 'boxeador', label: 'El Boxeador', sub: 'Perfil de Joel Diaz', icon: UserCheck },
-    { id: 'tienda', label: 'León Store', sub: 'Indumentaria & Merch', icon: ShoppingBag, badge: 'TIENDA' },
-    { id: 'elcamino', label: 'El Camino', sub: 'Docuseries & Bitácora', icon: Tv },
-    { id: 'noticias', label: 'Noticias', sub: 'Medio Oficial', icon: Newspaper },
-    { id: 'elring', label: 'El Ring', sub: 'Historial Deportivo', icon: Trophy },
-    { id: 'historia', label: 'La Historia', sub: 'Cronología Deportiva', icon: History },
-    { id: 'financiacion', label: 'El León se Financia', sub: 'Hub de Autogestión', icon: DollarSign },
-    { id: 'aliados', label: 'Aliados', sub: 'Marcas & Sponsors', icon: Award },
-    { id: 'lamanada', label: 'La Manada', sub: 'Comunidad WhatsApp', icon: Users },
-    { id: 'archivo', label: 'El Archivo', sub: 'Memoria Histórica', icon: Layers }
+  // NAVEGACIÓN PRINCIPAL (REDUCIDA A 5 PESTAÑAS)
+  const mainTabs = [
+    { id: 'el-leon', label: 'EL LEÓN', sub: 'Joel Díaz & Filosofía', icon: UserCheck },
+    { id: 'operacion-santa-cruz', label: 'OPERACIÓN SANTA CRUZ', sub: 'Rumbo a Bolivia 2026', icon: Zap, badge: 'MISIÓN' },
+    { id: 'leon-store', label: 'LEÓN STORE', sub: 'Indumentaria & Merch', icon: ShoppingBag, badge: 'PREVENTA' },
+    { id: 'entrenamiento', label: 'ENTRENAMIENTO', sub: 'Clases, Timer & Nutrición', icon: Dumbbell },
+    { id: 'actualidad', label: 'ACTUALIDAD', sub: 'Noticias & Comunicados', icon: Newspaper },
+    ...(userRole === 'profesor' ? [{ id: 'admin', label: 'PANEL CREADOR', sub: 'Gestión & Rutinas', icon: ShieldCheck, badge: 'ADMIN' }] : [])
   ];
 
+  // PRODUCTOS Y PRECIOS EXACTOS SOLICITADOS
   const products = [
     {
       id: 'original-01',
       name: 'EL LEÓN — ORIGINAL 01',
       tagline: 'LA PRIMERA PIEL DEL LEÓN',
-      line: 'LÍNEA 01 — ORIGINAL',
-      category: 'merch',
+      line: 'LÍNEA ORIGINAL',
+      colorName: 'NEGRO',
+      isGreen: false,
       price: 34900,
       deposit: 17500,
+      balance: 17400,
       image: '/1785149020942.png',
-      badge: 'PREVENTA EXCLUSIVA',
+      badge: 'LÍNEA ORIGINAL',
       badgeColor: 'bg-zinc-800 text-yellow-400 border-yellow-500/30',
-      description: 'Corte oversize urbano. Algodón pesado de alta resistencia diseñado para soportar el entrenamiento diario.',
+      description: 'Corte oversize urbano. Algodón pesado de alta resistencia diseñado para el día a día y el gimnasio.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     },
     {
       id: 'bolivia-remera',
       name: 'RUMBO A BOLIVIA — REMERA',
       tagline: 'EDICIÓN OFICIAL OPERACIÓN SANTA CRUZ',
-      line: 'LÍNEA 02 — CAMPAÑA BOLIVIA 2026',
-      category: 'santa_cruz',
-      price: 34900,
-      deposit: 17500,
+      line: 'CAMPAÑA BOLIVIA 2026',
+      colorName: 'VERDE',
+      isGreen: true,
+      price: 39900,
+      deposit: 20000,
+      balance: 19900,
       image: '/1785148963897.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Edición oficial de la misión activa. Todo el margen neto se destina a cubrir pasajes y logística del campamento.',
+      description: '100% de lo recaudado con los productos verdes está destinado a financiar el viaje y la participación de El León en Bolivia 2026.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     },
     {
       id: 'bolivia-hoodie',
       name: 'RUMBO A BOLIVIA — HOODIE',
       tagline: 'BUZO OVERSIZE EDICIÓN LIMITADA',
-      line: 'LÍNEA 02 — CAMPAÑA BOLIVIA 2026',
-      category: 'santa_cruz',
-      price: 58000,
-      deposit: 29000,
+      line: 'CAMPAÑA BOLIVIA 2026',
+      colorName: 'VERDE',
+      isGreen: true,
+      price: 69900,
+      deposit: 35000,
+      balance: 34900,
       image: '/1785148947849.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Buzo pesado con capucha doble, puños reinforced y estampado táctico de alto impacto en espalda.',
+      description: 'Buzo pesado con dos estampados. El 100% de lo recaudado con los productos verdes está destinado a financiar el viaje y la participación de El León en Bolivia 2026.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
-    },
-    {
-      id: 'fight-vendas',
-      name: 'VENDAS OFICIALES EL LEÓN 4.5M',
-      tagline: 'PROTECCIÓN Y SOPORTE PRO',
-      line: 'FIGHT SHOP — EQUIPAMIENTO',
-      category: 'fight_shop',
-      price: 12500,
-      deposit: 6250,
-      image: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=600&auto=format&fit=crop&q=80',
-      badge: 'PRÓXIMAMENTE',
-      badgeColor: 'bg-yellow-950 text-yellow-400 border-yellow-500/30',
-      description: 'Vendas semi-elásticas con sujeción de pulgar y velcro de alta resistencia para guanteos exigentes.',
-      sizes: ['ÚNICO']
     }
   ];
 
-  const accionesTemporales = [
-    {
-      id: 'empanadas-tanda-1',
-      title: 'GRAN VENTA DE EMPANADAS — TANDA SANTA CRUZ',
-      fecha: 'Sábado 15 de Agosto 2026',
-      lugar: 'Santo Tomé / Retiro en Gimnasio IMAD',
-      precioPorDocena: 14000,
-      descripcion: 'Empanadas caseras de carne cortada a cuchillo. Todo lo vendido financia la logística de traslado.',
-      activo: true
-    }
-  ];
-
-  const episodiosDocu = [
-    {
-      id: 'ep-01',
-      number: 'EP. 01',
-      title: 'Decidimos Ir — Rumbo a Bolivia 2026',
-      date: 'Febrero 2026',
-      duration: '08:45 min',
-      thumbnail: '/E-576.jpg',
-      description: 'El momento en que fijamos el objetivo de la Operación Santa Cruz y organizamos la autogestión de la campaña.',
-      videoUrl: 'https://instagram.com/joelbox_'
-    },
-    {
-      id: 'ep-02',
-      number: 'EP. 02',
-      title: 'Doble Turno y Bolsa Pesada en IMAD',
-      date: 'Febrero 2026',
-      duration: '12:10 min',
-      thumbnail: '/20240203092340_IMG_2552.jpg',
-      description: 'Rutina completa de preparación física, sparring técnico e intensificación del trabajo diario.',
-      videoUrl: 'https://instagram.com/joelbox_'
-    }
-  ];
-
-  const peleasHistorial = [
-    {
-      id: 'p-01',
-      fecha: 'Por Confirmar 2026',
-      rival: 'Por Confirmar',
-      lugar: 'Rosario / Santa Fe, Arg',
-      categoria: 'Peso Gallo (Amateur)',
-      resultado: 'PRÓXIMO COMBATE',
-      metodo: 'En negociación',
-      status: 'proximo'
-    },
-    {
-      id: 'p-02',
-      fecha: 'Temporada 2025',
-      rival: 'Rival Provincial',
-      lugar: 'Santa Fe, Argentina',
-      categoria: 'Peso Gallo',
-      resultado: 'VICTORIA',
-      metodo: 'Puntos (Decisión Unánime)',
-      status: 'pasado'
-    }
-  ];
-
-  const recaudado = 0;
-  const objetivo = 2600000;
+  // Datos Operación Santa Cruz
+  const recaudado = 0; // Se mantiene editable
+  const objetivo = 3000000;
   const porcentaje = Math.min(Math.round((recaudado / objetivo) * 100), 100);
+
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
+  };
 
   const handleSelectTab = (id) => {
     setActiveTab(id);
     setMobileMenuOpen(false);
-    if (id === 'clases') {
+    if (id === 'entrenamiento') {
       fetchPublicPosts();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -372,40 +329,50 @@ export default function App() {
     setSelectedSize(prev => ({ ...prev, [productId]: size }));
   };
 
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
-  };
-
-  const createOrderWhatsapp = (product) => {
+  // Iniciar proceso de reserva
+  const handleStartReservation = (product) => {
     const size = selectedSize[product.id];
     if (!size) {
-      alert('Por favor selecciona un talle o formato antes de reservar.');
+      alert('Por favor elegí un talle antes de continuar con la reserva.');
       return;
     }
-    const msg = `¡Hola Joel! Quiero reservar el producto: *${product.name}* (Talle/Opción: *${size}*).\n\n` +
-      `• Precio Preventa: ${formatCurrency(product.price)}\n` +
-      `• Seña del 50%: ${formatCurrency(product.deposit)}\n\n` +
-      `Quedo a la espera de los datos de transferencia. ¡Vamos El León!`;
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+    setSelectedProduct(product);
+    setCheckoutStep('formulario');
   };
 
-  const createComidaWhatsapp = (accion) => {
-    const msg = `¡Hola Joel! Quiero encargar empanadas para la *${accion.title}*.\n` +
-      `• Precio: ${formatCurrency(accion.precioPorDocena)} / docena\n\n` +
-      `Avisame cómo transferir la seña.`;
+  // Enviar mensaje de reserva a WhatsApp
+  const handleSendReservationWhatsapp = (e) => {
+    e.preventDefault();
+    if (!buyerForm.nombreApellido || !buyerForm.dni || !buyerForm.telefono || !buyerForm.localidad) {
+      alert('Por favor completá todos los datos de contacto y entrega.');
+      return;
+    }
+
+    const size = selectedSize[selectedProduct.id];
+    const totalCalc = selectedProduct.price * orderQuantity;
+    const depositCalc = selectedProduct.deposit * orderQuantity;
+    const balanceCalc = selectedProduct.balance * orderQuantity;
+    const coleccionLabel = selectedProduct.isGreen ? "RUMBO A BOLIVIA 2026" : "ORIGINAL";
+
+    const msg = `🦁 *NUEVA RESERVA — EL LEÓN*\n\n` +
+      `Nombre: ${buyerForm.nombreApellido}\n` +
+      `DNI: ${buyerForm.dni}\n` +
+      `WhatsApp: ${buyerForm.telefono}\n` +
+      `Localidad/Zona: ${buyerForm.localidad}\n\n` +
+      `Producto: ${selectedProduct.name}\n` +
+      `Talle: ${size}\n` +
+      `Cantidad: ${orderQuantity}\n\n` +
+      `Precio total: ${formatCurrency(totalCalc)}\n` +
+      `Seña: ${formatCurrency(depositCalc)}\n` +
+      `Saldo contra entrega: ${formatCurrency(balanceCalc)}\n\n` +
+      `Colección:\n${coleccionLabel}`;
+
+    // Abrir WhatsApp con el número asignado
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    // Avanzar a la pantalla de confirmación y datos de seña
+    setCheckoutStep('transferencia');
   };
-
-  const createSponsorWhatsapp = () => {
-    const msg = `¡Hola Joel! Me interesa sumarme como ALIADO / SPONSOR estratégico de El León. Quisiera coordinar una propuesta.`;
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
-  };
-
-  const filteredProducts = selectedStoreCat === 'todos' 
-    ? products 
-    : products.filter(p => p.category === selectedStoreCat);
-
-  const activeTabMeta = menuItems.find(item => item.id === activeTab) || menuItems[0];
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-yellow-500 selection:text-black pb-16">
@@ -414,6 +381,7 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           
+          {/* LOGO EL LEÓN */}
           <div 
             className="flex items-center gap-2.5 cursor-pointer select-none" 
             onClick={handleLogoClick}
@@ -425,6 +393,7 @@ export default function App() {
             </span>
           </div>
 
+          {/* ACCIONES DE SESIÓN Y REDES */}
           <div className="flex items-center gap-2">
             <a 
               href={instagramUrl}
@@ -436,6 +405,7 @@ export default function App() {
               <span>@joelbox_</span>
             </a>
 
+            {/* INDICADOR DE SESIÓN */}
             {session ? (
               <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
                 <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg border ${
@@ -461,6 +431,7 @@ export default function App() {
               </button>
             )}
 
+            {/* BOTÓN MENÚ MÓVIL */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-black px-3.5 py-1.5 rounded-xl text-xs uppercase tracking-wider transition-all"
@@ -471,42 +442,44 @@ export default function App() {
           </div>
         </div>
 
+        {/* NAVEGACIÓN PRINCIPAL: LAS 5 PESTAÑAS */}
         <div className="max-w-6xl mx-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {menuItems.slice(0, 6).map(item => {
+          {mainTabs.map(item => {
             const IconComponent = item.icon;
             const isSelected = activeTab === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => handleSelectTab(item.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black uppercase whitespace-nowrap transition-all border ${
                   isSelected 
-                    ? 'bg-zinc-100 text-black font-black' 
-                    : 'bg-zinc-900/80 text-zinc-400 hover:text-white border border-zinc-800/80'
+                    ? 'bg-yellow-400 text-black border-yellow-400 shadow-lg shadow-yellow-400/10' 
+                    : 'bg-zinc-900/90 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'
                 }`}
               >
                 <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-black' : 'text-yellow-400'}`} />
                 <span>{item.label}</span>
+                {item.badge && (
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${
+                    isSelected ? 'bg-black text-yellow-400' : 'bg-yellow-400/10 text-yellow-400'
+                  }`}>
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 whitespace-nowrap"
-          >
-            <span>+ Ver Todo</span>
-          </button>
         </div>
       </header>
 
-      {/* MENÚ COMPLETO */}
+      {/* MENÚ MÓVIL DESPLEGABLE */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-6 overflow-y-auto animate-fade-in">
           <div>
             <div className="flex justify-between items-center border-b border-zinc-800 pb-4 mb-6">
               <div>
-                <span className="text-xl font-black text-yellow-400 tracking-tighter block">UNIVERSO DE EL LEÓN</span>
-                <span className="text-xs text-zinc-400">Navegador General de Secciones</span>
+                <span className="text-xl font-black text-yellow-400 tracking-tighter block">EL LEÓN — NAVEGACIÓN</span>
+                <span className="text-xs text-zinc-400">Las 5 Pestañas de la Aplicación</span>
               </div>
               <button 
                 onClick={() => setMobileMenuOpen(false)}
@@ -516,8 +489,8 @@ export default function App() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {menuItems.map((item) => {
+            <div className="grid grid-cols-1 gap-3">
+              {mainTabs.map((item) => {
                 const IconComponent = item.icon;
                 const isSelected = activeTab === item.id;
                 return (
@@ -548,42 +521,22 @@ export default function App() {
           </div>
 
           <div className="pt-8 border-t border-zinc-900 text-center space-y-2">
-            <p className="text-xs text-zinc-400">Joel Diaz — Boxeador & Profesor • @joelbox_</p>
-            <button 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xs text-yellow-400 font-bold underline uppercase tracking-wider"
-            >
-              Cerrar Menú
-            </button>
+            <p className="text-xs text-zinc-400">Joel Díaz — Boxeador & Profesor • @joelbox_</p>
           </div>
         </div>
       )}
 
-      {/* TITULAR DE SECCIÓN */}
-      <div className="bg-zinc-950 border-b border-zinc-900 py-3 px-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-zinc-400">
-          <div className="flex items-center gap-2">
-            <span className="text-zinc-600">Sección:</span>
-            <span className="font-bold text-yellow-400 uppercase tracking-wider">
-              {activeTab === 'admin' ? 'PANEL CREADOR' : activeTabMeta.label}
-            </span>
-          </div>
-          <span className="text-[10px] bg-zinc-900 px-2 py-0.5 rounded text-zinc-400 font-mono hidden sm:inline">
-            UNIVERSO DIGITAL / 2026
-          </span>
-        </div>
-      </div>
-
-      {/* SECCIONES DE CONTENIDO */}
+      {/* RENDERIZADO DE LAS 5 PESTAÑAS */}
       <main className="max-w-6xl mx-auto px-4 pt-6">
 
+        {/* BANNER MODO ENTRENADOR */}
         {session && userRole === 'profesor' && activeTab !== 'admin' && (
           <div className="mb-6 bg-yellow-400/10 border border-yellow-400/30 p-4 rounded-2xl flex justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-5 h-5 text-yellow-400 shrink-0" />
               <div>
                 <h4 className="text-xs font-black text-yellow-400 uppercase">Modo Entrenador Activado</h4>
-                <p className="text-[11px] text-zinc-400">Tenés habilitado el acceso al Panel Creador para crear y supervisar rutinas.</p>
+                <p className="text-[11px] text-zinc-400">Tenés acceso habilitado al Panel Creador para subir rutinas.</p>
               </div>
             </div>
             <button
@@ -595,118 +548,659 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. INICIO / MISIÓN ACTIVA */}
-        {activeTab === 'mision' && (
-          <div className="space-y-10 animate-fade-in">
-            <section className="relative rounded-3xl overflow-hidden border border-zinc-800 p-6 sm:p-12 text-center bg-zinc-950">
-              <div className="absolute inset-0 z-0">
-                <img src="/E-576.jpg" alt="Joel El León" className="w-full h-full object-cover object-center opacity-30 filter grayscale" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+        {/* =========================================================================
+            1. PESTAÑA: EL LEÓN (IDENTIDAD, FILOSOFÍA Y MANIFIESTO DE JOEL)
+           ========================================================================= */}
+        {activeTab === 'el-leon' && (
+          <div className="space-y-12 animate-fade-in max-w-4xl mx-auto">
+            
+            {/* CABECERA & FRASE PRINCIPAL */}
+            <section className="relative rounded-3xl overflow-hidden border border-zinc-800 p-8 sm:p-12 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-center space-y-6">
+              <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-500/20 px-3.5 py-1.5 rounded-full text-yellow-400 text-xs font-black uppercase tracking-widest">
+                <Sparkle className="w-3.5 h-3.5" /> MARCA, IDENTIDAD & FILOSOFÍA
               </div>
 
-              <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-950 text-emerald-400 text-xs font-bold border border-emerald-500/30">
-                  <Zap className="w-3.5 h-3.5" /> MISIÓN ACTIVA: OPERACIÓN SANTA CRUZ 2026
-                </span>
-                
-                <h1 className="text-3xl sm:text-6xl font-black text-white uppercase tracking-tight leading-none">
-                  EL UNIVERSO DIGITAL DE <span className="text-yellow-400">EL LEÓN</span>
-                </h1>
-                
-                <p className="text-zinc-300 text-xs sm:text-sm leading-relaxed max-w-lg mx-auto">
-                  Centro oficial de operaciones de <strong>Joel Diaz (@joelbox_)</strong>. Bitácora de entrenamiento, clases, tienda oficial y financiamiento autogestionado.
-                </p>
+              <h1 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight leading-none">
+                "Soy un chico normal viviendo una vida de <span className="text-yellow-400">superhéroe</span>."
+              </h1>
 
-                <div className="pt-2 flex flex-wrap gap-3 justify-center">
-                  <button 
-                    onClick={() => handleSelectTab('clases')}
-                    className="bg-yellow-400 text-black font-black px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:bg-yellow-300 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Dumbbell className="w-4 h-4" /> Ver Clases & Rutinas
-                  </button>
-                  <button 
-                    onClick={() => handleSelectTab('timer')}
-                    className="bg-zinc-900 border border-yellow-500/40 text-yellow-400 font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Timer className="w-4 h-4" /> Abrir Timer Boxeo
-                  </button>
-                  <button 
-                    onClick={() => handleSelectTab('tienda')}
-                    className="bg-zinc-900 border border-zinc-700 text-white font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
-                  >
-                    <ShoppingBag className="w-4 h-4 text-yellow-400" /> Ir a León Store
-                  </button>
+              {/* COMPARACIÓN CON SPIDER-MAN */}
+              <div className="max-w-2xl mx-auto bg-black/60 border border-zinc-800 p-5 rounded-2xl text-left space-y-3">
+                <span className="text-xs font-black text-yellow-400 uppercase tracking-widest block">🕷️ La Comparación con Spider-Man</span>
+                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed italic">
+                  "Si tuviera que compararme con un superhéroe, sería Spider-Man. Porque detrás del boxeador no hay un personaje perfecto: hay un chico común que decidió asumir una responsabilidad extraordinaria."
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-4 justify-center pt-2">
+                <div className="bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl text-center">
+                  <span className="text-2xl font-black text-yellow-400 block">+44</span>
+                  <span className="text-[10px] text-zinc-400 uppercase font-bold">Peleas Amateur</span>
+                </div>
+                <div className="bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl text-center">
+                  <span className="text-2xl font-black text-white block">Campeón</span>
+                  <span className="text-[10px] text-zinc-400 uppercase font-bold">Regional y Provincial</span>
+                </div>
+                <div className="bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-xl text-center">
+                  <span className="text-2xl font-black text-yellow-400 block">3er Puesto</span>
+                  <span className="text-[10px] text-zinc-400 uppercase font-bold">Nacional</span>
                 </div>
               </div>
             </section>
 
-            <section className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-2xl space-y-5">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            {/* MÓDULOS DE CONTENIDO A - J */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* A. QUIÉN SOY */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <User className="w-5 h-5" /> A. Quién Soy
+                </h3>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  Soy Joel Díaz, boxeador amateur con más de 44 peleas amateur y tercer puesto a nivel nacional. Soy un chico normal viviendo una vida de superhéroe.
+                </p>
+              </div>
+
+              {/* B. QUÉ SIGNIFICA EL LEÓN */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <Flame className="w-5 h-5" /> B. Qué significa El León
+                </h3>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  Es un apodo que representa de dónde vengo y hacia dónde voy.
+                </p>
+              </div>
+
+              {/* C. MI CAMINO DEPORTIVO */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-3">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <Trophy className="w-5 h-5" /> C. Mi Camino Deportivo
+                </h3>
+                <ul className="text-xs text-zinc-300 space-y-1.5 list-disc list-inside">
+                  <li>Más de 44 peleas amateur</li>
+                  <li>Campeón regional</li>
+                  <li>Campeón provincial</li>
+                  <li>Tercer puesto a nivel nacional</li>
+                </ul>
+              </div>
+
+              {/* D. MIS LOGROS MÁS IMPORTANTES */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-3">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <Award className="w-5 h-5" /> D. Logros Destacados
+                </h3>
+                <ul className="text-xs text-zinc-300 space-y-1.5 list-disc list-inside">
+                  <li>Campeón regional</li>
+                  <li>Campeón provincial</li>
+                  <li>Tercer puesto a nivel nacional</li>
+                  <li>Volver a pelear en Santa Fe y ganar el campeonato provincial</li>
+                </ul>
+              </div>
+
+              {/* E. MI OBJETIVO */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-3 md:col-span-2">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <Target className="w-5 h-5" /> E. Mi Objetivo
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-zinc-300">
+                  <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                    <span className="font-bold text-white block mb-1">En el Ring:</span>
+                    Pelear el Campeonato Verde y Oro organizado por la WBC y llegar a ser campeón indiscutido de mi categoría.
+                  </div>
+                  <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                    <span className="font-bold text-white block mb-1">A Futuro:</span>
+                    Retirarme a vivir entre las sierras de Jujuy durante 6 meses y luego volver para abrir mi centro de entrenamiento inspirado en mi entrenador (IMACEN).
+                  </div>
+                </div>
+              </div>
+
+              {/* F. BOLIVIA */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <Flag className="w-5 h-5" /> F. Bolivia
+                </h3>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  Bolivia representa mi primera oportunidad de pelear internacionalmente. También representa experiencia, crecimiento y la posibilidad de ganar un título.
+                </p>
+              </div>
+
+              {/* G. MI FILOSOFÍA */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <Activity className="w-5 h-5" /> G. Mi Filosofía
+                </h3>
+                <div className="text-xs text-zinc-300 leading-relaxed space-y-2">
+                  <p>"La disciplina, un equipo de trabajo y una familia son la receta para cualquier campeón."</p>
+                  <p className="font-bold text-yellow-400">"Para mí la disciplina es un estilo de vida."</p>
+                  <p>"Mi estilo no viene del sacrificio. Viene de divertirme haciendo lo que hago."</p>
+                </div>
+              </div>
+
+              {/* H. QUIÉN SOY FUERA DEL RING */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <UserCheck className="w-5 h-5" /> H. Fuera del Ring
+                </h3>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  "Solo soy un chico normal. Soy el profe buena onda. El pibe que va todos los días. El enano. Satanás para mi mamá. Todos ellos soy yo. Pero en definitiva, soy normal."
+                </p>
+              </div>
+
+              {/* I. MÁS ALLÁ DEL BOXEO */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <Tv className="w-5 h-5" /> I. Más allá del Boxeo
+                </h3>
+                <ul className="text-xs text-zinc-300 space-y-1 list-disc list-inside">
+                  <li>Creación de contenido</li>
+                  <li>Deseo de estudiar periodismo el año que viene</li>
+                  <li>Afinidad por la cumbia como buen santafesino</li>
+                  <li>Disfrute de la familia, los alumnos y los amigos</li>
+                </ul>
+              </div>
+
+              {/* J. EL ORIGEN DE LA MARCA */}
+              <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2 md:col-span-2">
+                <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" /> J. El Origen de la Marca
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                  "La marca empezó para ayudar a mis papás a juntar plata para Bolivia, pero creció y ahora quiero que todos sean parte de mi camino."
+                </p>
+              </div>
+
+            </div>
+
+            {/* K. MENSAJE FINAL */}
+            <div className="bg-yellow-400 text-black p-8 rounded-3xl text-center space-y-2 shadow-2xl">
+              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-900">K. MENSAJE FINAL</h3>
+              <p className="text-lg sm:text-2xl font-black uppercase tracking-tight">
+                "El León existe para que otros puedan sentirse parte de este camino."
+              </p>
+            </div>
+
+          </div>
+        )}
+
+        {/* =========================================================================
+            2. PESTAÑA: OPERACIÓN SANTA CRUZ (RUMBO A BOLIVIA 2026)
+           ========================================================================= */}
+        {activeTab === 'operacion-santa-cruz' && (
+          <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
+            
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-emerald-400 uppercase bg-emerald-950 border border-emerald-500/30 px-3 py-1 rounded-full">
+                CAMPAÑA INTERNACIONAL DE AUTOGESTIÓN
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">
+                OPERACIÓN SANTA CRUZ
+              </h2>
+              <p className="text-xs sm:text-sm text-yellow-400 font-bold uppercase tracking-widest">
+                RUMBO A BOLIVIA 2026
+              </p>
+            </div>
+
+            {/* TABLERO DE OBJETIVO Y PROGRESO */}
+            <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <span className="bg-yellow-400 text-black text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    PROYECTO DESTACADO / TEMPORADA 01
-                  </span>
-                  <h2 className="text-2xl font-black text-white uppercase mt-1.5 flex items-center gap-2">
-                    🇧🇴 OPERACIÓN SANTA CRUZ 2026
-                  </h2>
-                  <p className="text-xs text-zinc-400 mt-0.5">Campamento internacional de entrenamiento en altura y logística.</p>
+                  <h3 className="text-xl font-black text-white uppercase">Objetivo Total de Financiación</h3>
+                  <p className="text-xs text-zinc-400">Fondos destinados a pasajes, logística y campamento deportivo.</p>
                 </div>
 
                 <div className="sm:text-right">
                   <span className="text-[10px] text-zinc-400 uppercase font-mono block">Progreso actual</span>
-                  <span className="text-2xl font-mono font-bold text-yellow-400">
+                  <span className="text-2xl sm:text-3xl font-mono font-bold text-yellow-400">
                     ${recaudado.toLocaleString('es-AR')} <span className="text-xs text-zinc-500">/ ${objetivo.toLocaleString('es-AR')}</span>
                   </span>
                 </div>
               </div>
 
-              <div className="w-full bg-zinc-900 h-4 rounded-full overflow-hidden p-0.5 border border-zinc-800">
+              {/* Barra de Progreso */}
+              <div className="w-full bg-zinc-900 h-5 rounded-full overflow-hidden p-0.5 border border-zinc-800">
                 <div 
-                  className="bg-gradient-to-r from-yellow-500 to-yellow-300 h-full rounded-full transition-all duration-700"
+                  className="bg-gradient-to-r from-emerald-500 to-yellow-400 h-full rounded-full transition-all duration-700"
                   style={{ width: `${porcentaje}%` }}
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-zinc-900">
-                <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
-                  <span className="text-xs font-bold text-yellow-400 block uppercase">1. Producción Textil</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Una fracción del pago de cada prenda cubre estrictamente el costo de confección.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-zinc-900 text-xs">
+                <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                  <span className="font-bold text-yellow-400 block uppercase mb-1">Misión</span>
+                  Viajar a Bolivia en óptimas condiciones para competir y traer el título.
                 </div>
-                <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
-                  <span className="text-xs font-bold text-yellow-400 block uppercase">2. Logística & Traslado</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">El margen neto financia directamente pasajes terrestres/aéreos y estadía.</p>
+                <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                  <span className="font-bold text-emerald-400 block uppercase mb-1">Cómo Colaborar</span>
+                  Comprando indumentaria verde o sumándote a las acciones colectivas.
                 </div>
-                <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800/80">
-                  <span className="text-xs font-bold text-yellow-400 block uppercase">3. Preparación de Combate</span>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Soporta los insumos de vendaje, suplementación e indumentaria técnica.</p>
+                <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                  <span className="font-bold text-white block uppercase mb-1">Sponsors / Aliados</span>
+                  Acompañamiento de marcas que impulsan el deporte santafesino.
                 </div>
               </div>
-            </section>
-          </div>
-        )}
+            </div>
 
-        {/* 2. CLASES & RUTINAS */}
-        {activeTab === 'clases' && (
-          <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Centro de Entrenamiento</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">CLASES & RUTINAS</h2>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                Usá la calculadora abierta, ingresá con tu Clave de Alumno o pedí tu plan a medida.
+            {/* FRASE OBLIGATORIA PARA PRODUCTOS VERDES */}
+            <div className="bg-emerald-950/80 border border-emerald-500/50 p-6 rounded-2xl text-center space-y-2">
+              <span className="text-xs font-black text-emerald-400 uppercase tracking-widest block">COMPROMISO CON LA MISIÓN</span>
+              <p className="text-base sm:text-xl font-black text-white uppercase">
+                "El 100% de lo recaudado con los productos verdes está destinado a financiar el viaje y la participación de El León en Bolivia 2026."
               </p>
             </div>
 
+            {/* PRODUCTOS VERDES ASOCIADOS */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-black text-white uppercase flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-emerald-400" />
+                Indumentaria Oficial de la Campaña
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {products.filter(p => p.isGreen).map((p) => (
+                  <div key={p.id} className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden p-5 flex flex-col justify-between space-y-4 hover:border-emerald-500/50 transition-all">
+                    <div className="space-y-3">
+                      <div className="relative aspect-square bg-zinc-900 rounded-xl overflow-hidden">
+                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 bg-emerald-950 text-emerald-400 border border-emerald-500/40 text-[10px] font-black px-2 py-0.5 rounded">
+                          100% A BENEFICIO
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="text-lg font-black text-white uppercase">{p.name}</h4>
+                        <p className="text-xs text-zinc-400 italic">{p.tagline}</p>
+                      </div>
+
+                      <p className="text-xs text-zinc-300 leading-relaxed">{p.description}</p>
+
+                      <div className="pt-2">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Elegir Talle:</label>
+                        <div className="flex gap-1.5">
+                          {p.sizes.map((sz) => (
+                            <button
+                              key={sz}
+                              onClick={() => handleSelectSize(p.id, sz)}
+                              className={`px-3 py-1 text-xs font-bold rounded border ${
+                                selectedSize[p.id] === sz ? 'bg-emerald-400 text-black border-emerald-400' : 'bg-zinc-900 text-zinc-300 border-zinc-800'
+                              }`}
+                            >
+                              {sz}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-zinc-900 flex justify-between items-end text-xs">
+                        <div>
+                          <span className="text-zinc-500 block">Total</span>
+                          <span className="font-black text-white text-base">{formatCurrency(p.price)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-emerald-400 font-bold block">Seña (50%)</span>
+                          <span className="font-bold text-emerald-400 text-sm">{formatCurrency(p.deposit)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        handleSelectTab('leon-store');
+                        handleStartReservation(p);
+                      }}
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                    >
+                      Reservar Producto Verde
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* =========================================================================
+            3. PESTAÑA: LEÓN STORE (VENTA POR PREVENTA)
+           ========================================================================= */}
+        {activeTab === 'leon-store' && (
+          <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
+            
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">TIENDA OFICIAL</span>
+              <h2 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">LEÓN STORE</h2>
+              <p className="text-xs text-zinc-400">Venta exclusiva por sistema de PREVENTA y confección bajo pedido.</p>
+            </div>
+
+            {/* SUB-NAVEGACIÓN INTERNA STORE */}
+            <div className="flex justify-center gap-2 border-b border-zinc-800 pb-3 overflow-x-auto scrollbar-none">
+              {[
+                { id: 'catalogo', label: 'Catálogo' },
+                { id: 'como-comprar', label: 'Cómo Comprar' },
+                { id: 'faq', label: 'Preguntas Frecuentes' },
+                { id: 'manada', label: 'La Manada' }
+              ].map(st => (
+                <button
+                  key={st.id}
+                  onClick={() => setStoreSubTab(st.id)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${
+                    storeSubTab === st.id ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+                  }`}
+                >
+                  {st.label}
+                </button>
+              ))}
+            </div>
+
+            {/* VISTA 1: CATÁLOGO DE PRODUCTOS */}
+            {storeSubTab === 'catalogo' && checkoutStep === 'catalogo' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {products.map((p) => (
+                  <div key={p.id} className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all">
+                    <div className="space-y-3">
+                      <div className="relative aspect-square bg-zinc-900 rounded-xl overflow-hidden">
+                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                        <span className={`absolute top-2 left-2 text-[10px] font-black px-2 py-0.5 rounded border ${p.badgeColor}`}>
+                          {p.badge}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase block">{p.line}</span>
+                        <h3 className="text-lg font-black text-white uppercase">{p.name}</h3>
+                        <p className="text-xs text-zinc-400 italic">{p.tagline}</p>
+                      </div>
+
+                      <p className="text-xs text-zinc-300 leading-relaxed">{p.description}</p>
+
+                      <div className="pt-2">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Elegir Talle:</label>
+                        <div className="flex flex-wrap gap-1">
+                          {p.sizes.map((sz) => (
+                            <button
+                              key={sz}
+                              onClick={() => handleSelectSize(p.id, sz)}
+                              className={`px-2.5 py-1 text-xs font-bold rounded border ${
+                                selectedSize[p.id] === sz ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-zinc-900 text-zinc-300 border-zinc-800'
+                              }`}
+                            >
+                              {sz}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-zinc-900 flex justify-between items-end text-xs">
+                        <div>
+                          <span className="text-zinc-500 block">Precio Total</span>
+                          <span className="font-black text-white text-base">{formatCurrency(p.price)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-yellow-400 font-bold block">Seña (50%)</span>
+                          <span className="font-bold text-yellow-400 text-sm">{formatCurrency(p.deposit)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleStartReservation(p)}
+                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                    >
+                      Reservar Ahora
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* FORMULARIO DE RESERVA DIRECTO (SIN LOGIN) */}
+            {checkoutStep === 'formulario' && selectedProduct && (
+              <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6 max-w-2xl mx-auto">
+                <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
+                  <h3 className="text-xl font-black text-white uppercase">FORMULARIO DE RESERVA</h3>
+                  <button onClick={() => setCheckoutStep('catalogo')} className="text-xs text-zinc-400 hover:text-white underline">
+                    Volver al catálogo
+                  </button>
+                </div>
+
+                <form onSubmit={handleSendReservationWhatsapp} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block text-zinc-400 font-bold uppercase mb-1">Nombre y Apellido *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: Marcos Pérez"
+                      value={buyerForm.nombreApellido}
+                      onChange={(e) => setBuyerForm({ ...buyerForm, nombreApellido: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-zinc-400 font-bold uppercase mb-1">DNI *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Sin puntos"
+                        value={buyerForm.dni}
+                        onChange={(e) => setBuyerForm({ ...buyerForm, dni: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-400 font-bold uppercase mb-1">Número de Teléfono / WhatsApp *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: 3421234567"
+                        value={buyerForm.telefono}
+                        onChange={(e) => setBuyerForm({ ...buyerForm, telefono: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-zinc-400 font-bold uppercase mb-1">Cantidad *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={orderQuantity}
+                        onChange={(e) => setOrderQuantity(parseInt(e.target.value) || 1)}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-400 font-bold uppercase mb-1">Localidad / Zona de Entrega *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: Santo Tomé / Rosario"
+                        value={buyerForm.localidad}
+                        onChange={(e) => setBuyerForm({ ...buyerForm, localidad: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* RESUMEN DE TU RESERVA AUTOMÁTICO */}
+                  <div className="bg-black p-5 rounded-2xl border border-yellow-500/30 space-y-2 mt-4">
+                    <span className="text-yellow-400 font-black uppercase tracking-wider block">RESUMEN DE TU RESERVA</span>
+                    <div className="flex justify-between text-zinc-300">
+                      <span>Producto:</span>
+                      <span className="font-bold text-white">{selectedProduct.name}</span>
+                    </div>
+                    <div className="flex justify-between text-zinc-300">
+                      <span>Talle:</span>
+                      <span className="font-bold text-white">{selectedSize[selectedProduct.id]}</span>
+                    </div>
+                    <div className="flex justify-between text-zinc-300">
+                      <span>Cantidad:</span>
+                      <span className="font-bold text-white">{orderQuantity}</span>
+                    </div>
+                    <div className="flex justify-between text-zinc-300">
+                      <span>Precio total:</span>
+                      <span className="font-bold text-white">{formatCurrency(selectedProduct.price * orderQuantity)}</span>
+                    </div>
+                    <div className="flex justify-between text-yellow-400 font-bold">
+                      <span>Seña:</span>
+                      <span>{formatCurrency(selectedProduct.deposit * orderQuantity)}</span>
+                    </div>
+                    <div className="flex justify-between text-zinc-400">
+                      <span>Saldo contra entrega:</span>
+                      <span>{formatCurrency(selectedProduct.balance * orderQuantity)}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-black" /> ENVIAR RESERVA POR WHATSAPP
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* PAGO DE SEÑA Y DATOS DE TRANSFERENCIA */}
+            {checkoutStep === 'transferencia' && (
+              <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6 max-w-xl mx-auto text-center animate-fade-in">
+                <span className="text-3xl block">🦁</span>
+                <h3 className="text-2xl font-black text-white uppercase">¡RESERVA PREPARADA! 🦁</h3>
+                <p className="text-xs text-zinc-300">
+                  Ahora transferí la seña para confirmar tu pedido.
+                </p>
+
+                <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl text-left space-y-3 text-xs">
+                  <span className="text-yellow-400 font-black uppercase tracking-wider block">DATOS DE TRANSFERENCIA</span>
+                  <div>
+                    <span className="text-zinc-500 block">Alias:</span>
+                    <span className="font-mono font-bold text-white text-sm">[COMPLETAR]</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 block">Titular:</span>
+                    <span className="font-bold text-white">[COMPLETAR]</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 block">DNI/CUIT:</span>
+                    <span className="font-mono text-white">[COMPLETAR]</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-zinc-400">El saldo restante se abona contra entrega.</p>
+
+                <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 text-xs text-zinc-400">
+                  <span className="text-yellow-400 font-bold block mb-1">BIENVENIDO A LA MANADA 🦁</span>
+                  Tu compra es solo el comienzo. Como parte de la comunidad de El León podés seguir todo lo que viene.
+                </div>
+
+                <button
+                  onClick={() => {
+                    const msg = `¡Hola Joel! Te adjunto el comprobante de pago de la seña para mi reserva.`;
+                    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+                  }}
+                  className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                >
+                  <Send className="w-4 h-4" /> ENVIAR COMPROBANTE
+                </button>
+              </div>
+            )}
+
+            {/* VISTA 2: CÓMO FUNCIONA */}
+            {storeSubTab === 'como-comprar' && (
+              <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6">
+                <h3 className="text-xl font-black text-white uppercase text-center">CÓMO FUNCIONA LA PREVENTA</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 text-center text-xs">
+                  {[
+                    { step: '1', title: 'Elegís' },
+                    { step: '2', title: 'Reservás' },
+                    { step: '3', title: 'Transferís' },
+                    { step: '4', title: 'Producimos' },
+                    { step: '5', title: 'Te avisamos' },
+                    { step: '6', title: 'Entregamos' }
+                  ].map((st) => (
+                    <div key={st.step} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-1">
+                      <span className="text-yellow-400 font-black text-lg block">{st.step}</span>
+                      <span className="font-bold text-white uppercase text-[11px]">{st.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* VISTA 3: PREGUNTAS FRECUENTES */}
+            {storeSubTab === 'faq' && (
+              <div className="space-y-4">
+                <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl space-y-1">
+                  <h4 className="text-sm font-black text-yellow-400 uppercase">¿Por qué trabajamos por PREVENTA?</h4>
+                  <p className="text-xs text-zinc-300">Producimos bajo pedido para asegurar los talles exactos y destinar los fondos directamente al financiamiento deportivo.</p>
+                </div>
+                <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl space-y-1">
+                  <h4 className="text-sm font-black text-yellow-400 uppercase">¿Cómo abono el saldo restante?</h4>
+                  <p className="text-xs text-zinc-300">El saldo contra entrega se liquida en mano al recibir tu prenda.</p>
+                </div>
+              </div>
+            )}
+
+            {/* VISTA 4: LA MANADA */}
+            {storeSubTab === 'manada' && (
+              <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-yellow-500/30 p-8 rounded-3xl text-center space-y-4">
+                <span className="text-3xl block">🦁</span>
+                <h3 className="text-2xl font-black text-white uppercase">LA MANADA</h3>
+                <p className="text-xs text-zinc-300 max-w-md mx-auto">
+                  "No somos clientes. Somos La Manada. Un espacio para seguir el camino de El León, conocer novedades, preventas, sorteos, contenido exclusivo y acompañar la Operación Santa Cruz."
+                </p>
+                <a
+                  href={whatsappChannelUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl text-xs uppercase"
+                >
+                  UNIRME A LA MANADA
+                </a>
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* =========================================================================
+            4. PESTAÑA: ENTRENAMIENTO (CLASES, RUTINAS Y TIMER BOXEO)
+           ========================================================================= */}
+        {activeTab === 'entrenamiento' && (
+          <div className="space-y-10 animate-fade-in max-w-4xl mx-auto">
+            
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">CENTRO DE ENTRENAMIENTO</span>
+              <h2 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">ENTRENAMIENTO</h2>
+            </div>
+
+            {/* TIMER DE BOXEO REUTILIZADO */}
+            <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-3xl space-y-4">
+              <div className="flex items-center gap-2">
+                <Timer className="w-5 h-5 text-yellow-400" />
+                <h3 className="text-xl font-black text-white uppercase">Timer Boxeo (Reloj de Ring)</h3>
+              </div>
+              <TabataTimer />
+            </div>
+
+            {/* CALCULADORA NUTRICIONAL */}
             <div>
               <CalculadoraNutricional />
             </div>
 
+            {/* PORTAL PRIVADO DE ALUMNO POR CLAVE */}
             <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-4">
               <div className="flex items-center gap-2">
                 <Key className="w-5 h-5 text-yellow-400" />
-                <h3 className="text-xl font-black text-white uppercase">Acceso Alumnos — Tu Clave Personal</h3>
+                <h3 className="text-xl font-black text-white uppercase">Acceso Alumnos — Clave Personal</h3>
               </div>
               <p className="text-xs text-zinc-400">
-                Si Joel te asignó una rutina, ingresá la clave que te dio por WhatsApp para acceder a tu plan exclusivo:
+                Ingresá la clave que te dio Joel para ver tu rutina asignada:
               </p>
 
               <form onSubmit={handleSearchStudentKey} className="flex gap-2 max-w-md">
@@ -720,489 +1214,82 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={searchingStudent}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase"
                 >
-                  <Search className="w-4 h-4" />
-                  {searchingStudent ? 'Buscando...' : 'Ingresar'}
+                  {searchingStudent ? '...' : 'Ingresar'}
                 </button>
               </form>
 
               {studentSearched && (
-                <div className="pt-4 border-t border-zinc-900 animate-fade-in">
+                <div className="pt-4 border-t border-zinc-900">
                   {studentPosts.length > 0 ? (
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>¡Rutina encontrada para la clave "{activeStudentKey}"!</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-4">
-                        {studentPosts.map((post) => (
-                          <div key={post.id} className="bg-zinc-900/90 border border-yellow-500/50 rounded-2xl p-5 space-y-3">
-                            <div className="flex justify-between items-start">
-                              <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-400 text-black px-2.5 py-0.5 rounded">
-                                {post.category}
-                              </span>
-                              <span className="text-[10px] font-bold text-yellow-400 flex items-center gap-1">
-                                <Lock className="w-3 h-3" /> Plan Exclusivo
-                              </span>
-                            </div>
-
-                            <h4 className="text-lg font-black text-white uppercase">{post.title}</h4>
-
-                            {post.description && (
-                              <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line bg-black/50 p-4 rounded-xl border border-zinc-800">
-                                {post.description}
-                              </p>
-                            )}
-
-                            <a
-                              href={post.video_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 bg-yellow-400 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase"
-                            >
-                              <PlayCircle className="w-4 h-4" /> Ver Video de la Rutina
-                            </a>
-                          </div>
-                        ))}
-                      </div>
+                      {studentPosts.map((post) => (
+                        <div key={post.id} className="bg-zinc-900 border border-yellow-500/50 rounded-2xl p-5 space-y-3">
+                          <h4 className="text-lg font-black text-white uppercase">{post.title}</h4>
+                          <p className="text-xs text-zinc-300 whitespace-pre-line bg-black/50 p-4 rounded-xl">{post.description}</p>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <div className="text-xs text-red-400 bg-red-950/40 border border-red-800/50 p-4 rounded-xl">
-                      No encontramos ninguna rutina activa asignada a la clave <strong>"{activeStudentKey}"</strong>. Verificá que la estés escribiendo exactamente como te la dio Joel.
-                    </div>
+                    <div className="text-xs text-red-400">No encontramos ninguna rutina asignada a la clave "{activeStudentKey}".</div>
                   )}
                 </div>
               )}
             </div>
 
-            <div className="bg-gradient-to-br from-zinc-900 via-zinc-950 to-black border border-yellow-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="space-y-1">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
-                    <Target className="w-3.5 h-3.5" /> PLANES A MEDIDA
-                  </span>
-                  <h3 className="text-xl sm:text-2xl font-black text-white uppercase">¿No tenés clave todavía? Pedí tu Plan</h3>
-                  <p className="text-xs text-zinc-400 max-w-lg">
-                    Completá tu ficha de evaluación física para que analice tus objetivos y te arme una rutina personalizada con tu propia clave.
-                  </p>
-                </div>
-
+            {/* EVALUACIÓN FÍSICA PERSONALIZADA */}
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-black text-white uppercase">Pedí tu Plan Personalizado</h3>
                 <button
                   onClick={() => setShowCustomForm(!showCustomForm)}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 transition-all whitespace-nowrap self-stretch sm:self-auto justify-center"
+                  className="bg-yellow-400 text-black font-black px-4 py-2 rounded-xl text-xs uppercase"
                 >
-                  <FileText className="w-4 h-4" />
-                  {showCustomForm ? 'Cerrar Ficha' : 'Completar Ficha'}
+                  {showCustomForm ? 'Cerrar' : 'Completar Ficha'}
                 </button>
               </div>
 
               {showCustomForm && (
-                <form onSubmit={handleSendCustomForm} className="pt-6 border-t border-zinc-800 space-y-4 animate-fade-in">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Tu Nombre *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ej: Marcos Pérez"
-                        value={formData.nombre}
-                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Edad *</label>
-                      <input
-                        type="number"
-                        required
-                        placeholder="Ej: 24"
-                        value={formData.edad}
-                        onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Ciudad / Localidad</label>
-                      <input
-                        type="text"
-                        placeholder="Ej: Santo Tomé"
-                        value={formData.ciudad}
-                        onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                      />
-                    </div>
-                  </div>
-
+                <form onSubmit={handleSendCustomForm} className="pt-4 border-t border-zinc-800 space-y-4 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Objetivo Principal *</label>
-                      <select
-                        value={formData.objetivo}
-                        onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                      >
-                        <option value="Aprender Boxeo y Técnica">Aprender Boxeo y Técnica</option>
-                        <option value="Bajar de peso y quemar grasa">Bajar de peso y quemar grasa</option>
-                        <option value="Ganar masa muscular y fuerza">Ganar masa muscular y fuerza</option>
-                        <option value="Preparación Física para Combate">Preparación Física para Combate</option>
-                        <option value="Acondicionamiento físico general">Acondicionamiento físico general</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Nivel de Experiencia *</label>
-                      <select
-                        value={formData.nivel}
-                        onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                      >
-                        <option value="Principiante (Desde cero)">Principiante (Desde cero)</option>
-                        <option value="Intermedio (Ya entrené antes)">Intermedio (Ya entrené antes)</option>
-                        <option value="Avanzado (Boxeador / Atleta activo)">Avanzado (Boxeador / Atleta activo)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Disponibilidad Semanal *</label>
-                      <select
-                        value={formData.diasDisponibles}
-                        onChange={(e) => setFormData({ ...formData, diasDisponibles: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                      >
-                        <option value="2 días por semana">2 días por semana</option>
-                        <option value="3 días por semana">3 días por semana</option>
-                        <option value="4 a 5 días por semana">4 a 5 días por semana</option>
-                        <option value="Todos los días">Todos los días</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">¿Dónde vas a entrenar? *</label>
-                      <select
-                        value={formData.lugar}
-                        onChange={(e) => setFormData({ ...formData, lugar: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                      >
-                        <option value="En gimnasio tradicional">En gimnasio tradicional</option>
-                        <option value="En casa (sin equipamiento)">En casa (sin equipamiento)</option>
-                        <option value="En casa (con bolsa / mancuernas)">En casa (con bolsa / mancuernas)</option>
-                        <option value="Al aire libre / Parque">Al aire libre / Parque</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Lesiones o Molestias Físicas</label>
                     <input
                       type="text"
-                      placeholder="Ej: Dolor leve en rodilla derecha, hombro, etc. (O escribí 'Ninguna')"
-                      value={formData.lesiones}
-                      onChange={(e) => setFormData({ ...formData, lesiones: e.target.value })}
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      required
+                      placeholder="Tu Nombre *"
+                      value={formData.nombre}
+                      onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                      className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white"
+                    />
+                    <input
+                      type="number"
+                      required
+                      placeholder="Edad *"
+                      value={formData.edad}
+                      onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
+                      className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white"
                     />
                   </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
-                  >
-                    <Send className="w-4 h-4 fill-black" />
-                    Enviar Diagnóstico por WhatsApp a Joel
+                  <button type="submit" className="w-full bg-emerald-500 text-black font-black py-3 rounded-xl uppercase">
+                    Enviar Ficha por WhatsApp a Joel
                   </button>
                 </form>
               )}
             </div>
 
-            {posts.length > 0 && (
-              <div className="space-y-4 pt-4">
-                <h3 className="text-xl font-black text-white uppercase flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-yellow-400" />
-                  Clases Abiertas de Muestra
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {posts.map((post) => (
-                    <div 
-                      key={post.id}
-                      className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all"
-                    >
-                      <div className="space-y-3">
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-md">
-                          {post.category}
-                        </span>
-
-                        <h3 className="text-lg font-black text-white uppercase leading-tight">{post.title}</h3>
-
-                        {post.description && (
-                          <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
-                            {post.description}
-                          </p>
-                        )}
-                      </div>
-
-                      <a
-                        href={post.video_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
-                      >
-                        <PlayCircle className="w-4 h-4" /> Ver Clase
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
-        {/* 3. TIMER BOXEO */}
-        {activeTab === 'timer' && (
-          <div className="space-y-6 max-w-xl mx-auto animate-fade-in py-4">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Herramienta de Ring</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">CRONÓMETRO DE RING & TABATA</h2>
-              <p className="text-xs text-zinc-400 max-w-md mx-auto">
-                Reloj con sonido sintetizado de campana de acero para tus rounds de boxeo, sparring o trabajo fraccionado.
-              </p>
-            </div>
-
-            <TabataTimer />
-          </div>
-        )}
-
-        {/* 4. PANEL CREADOR ADMIN */}
-        {activeTab === 'admin' && (
-          <div className="animate-fade-in">
-            <Admin />
-          </div>
-        )}
-
-        {/* 5. EL BOXEADOR */}
-        {activeTab === 'boxeador' && (
-          <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Perfil Oficial</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL BOXEADOR</h2>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                Joel Diaz — Atleta amateur, profesor de boxeo y creador de contenido deportivo.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl">
-              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800">
-                <img src="/E-524.jpg" alt="Joel Diaz El León" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
-                <span className="absolute bottom-3 left-3 text-xs font-bold text-yellow-400 uppercase">En el rincón</span>
-              </div>
-
-              <div className="space-y-5">
-                <div className="space-y-1">
-                  <span className="text-xs font-bold text-yellow-400 uppercase tracking-widest">Biografía & Identidad</span>
-                  <h3 className="text-2xl font-black text-white uppercase">JOEL DIAZ ("EL LEÓN")</h3>
-                  <p className="text-xs text-zinc-400">Rosario / Santo Tomé, Santa Fe, Argentina</p>
-                </div>
-
-                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                  Entreno día a día en el gimnasio IMAD con una sola visión: superarme combate tras combate, transmitir la disciplina del boxeo a mis alumnos y llevar nuestra bandera a torneos internacionales.
-                </p>
-
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-zinc-900">
-                  <div>
-                    <span className="text-[10px] text-zinc-500 uppercase block font-bold">División</span>
-                    <span className="text-sm font-black text-white">Peso Gallo</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-500 uppercase block font-bold">Guardia</span>
-                    <span className="text-sm font-black text-white">Ortodoxa</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-500 uppercase block font-bold">Récord Amateur</span>
-                    <span className="text-sm font-black text-yellow-400">25-10-1</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-500 uppercase block font-bold">Gimnasio Base</span>
-                    <span className="text-sm font-black text-white">IMAD Boxing</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 6. LEÓN STORE */}
-        {activeTab === 'tienda' && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div>
-                <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Tienda Oficial del Universo</span>
-                <h2 className="text-3xl font-black text-white uppercase">LEÓN STORE</h2>
-                <p className="text-xs text-zinc-400 mt-1">Reserva el 50% vía WhatsApp y salda al recibir la prenda.</p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedStoreCat('todos')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
-                    selectedStoreCat === 'todos' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                  }`}
-                >
-                  Todos
-                </button>
-                <button
-                  onClick={() => setSelectedStoreCat('merch')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
-                    selectedStoreCat === 'merch' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                  }`}
-                >
-                  Línea Original
-                </button>
-                <button
-                  onClick={() => setSelectedStoreCat('santa_cruz')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
-                    selectedStoreCat === 'santa_cruz' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                  }`}
-                >
-                  Campaña Bolivia
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {filteredProducts.map((p) => (
-                <div key={p.id} className="bg-zinc-950 rounded-2xl border border-zinc-800 overflow-hidden flex flex-col justify-between hover:border-zinc-700 transition-all">
-                  <div>
-                    <div className="relative aspect-square bg-zinc-900 overflow-hidden flex items-center justify-center">
-                      <img 
-                        src={p.image} 
-                        alt={p.name}
-                        className="w-full h-full object-cover object-center"
-                      />
-                      <div className={`absolute top-3 left-3 text-[10px] font-black tracking-wider px-2.5 py-1 rounded-md border ${p.badgeColor}`}>
-                        {p.badge}
-                      </div>
-                    </div>
-
-                    <div className="p-5 space-y-3">
-                      <div>
-                        <span className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase">{p.line}</span>
-                        <h3 className="text-lg font-black text-white leading-tight uppercase mt-0.5">{p.name}</h3>
-                        <p className="text-xs text-zinc-400 italic mt-0.5">{p.tagline}</p>
-                      </div>
-
-                      <p className="text-xs text-zinc-300 leading-relaxed">{p.description}</p>
-
-                      <div className="pt-2">
-                        <label className="text-[11px] font-bold text-zinc-400 uppercase block mb-1.5">Seleccionar Talle:</label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {p.sizes.map((size) => (
-                            <button
-                              key={size}
-                              onClick={() => handleSelectSize(p.id, size)}
-                              className={`px-3 py-1.5 text-xs font-bold rounded-md border transition-all ${
-                                selectedSize[p.id] === size
-                                  ? 'bg-yellow-400 text-black border-yellow-400 scale-105'
-                                  : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700'
-                              }`}
-                            >
-                              {size}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-zinc-900 flex justify-between items-end">
-                        <div>
-                          <span className="text-[10px] text-zinc-400 block uppercase">Precio</span>
-                          <span className="text-lg font-black text-white">{formatCurrency(p.price)}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] text-yellow-400 block uppercase font-bold">Seña de Reserva (50%)</span>
-                          <span className="text-sm font-bold text-yellow-400">{formatCurrency(p.deposit)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-5 pt-0">
-                    <button
-                      onClick={() => createOrderWhatsapp(p)}
-                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
-                    >
-                      <MessageCircle className="w-4 h-4 fill-black" /> Reservar por WhatsApp
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 7. EL CAMINO */}
-        {activeTab === 'elcamino' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Bitácora Audiovisual</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL CAMINO — DOCUSERIES</h2>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto">
-                El trabajo silencioso del gimnasio, los sparrings y la preparación rumbo a las metas.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {episodiosDocu.map((ep) => (
-                <div key={ep.id} className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col justify-between">
-                  <div>
-                    <div className="relative aspect-video bg-zinc-900 overflow-hidden group">
-                      <img src={ep.thumbnail} alt={ep.title} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center pl-0.5 text-black">
-                          <Play className="w-6 h-6 fill-black" />
-                        </div>
-                      </div>
-                      <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-mono px-2 py-0.5 rounded">
-                        {ep.duration}
-                      </span>
-                    </div>
-
-                    <div className="p-5 space-y-2">
-                      <div className="flex justify-between items-center text-[10px] font-bold text-yellow-400 uppercase">
-                        <span>{ep.number}</span>
-                        <span className="text-zinc-500">{ep.date}</span>
-                      </div>
-                      <h3 className="text-base font-black text-white uppercase">{ep.title}</h3>
-                      <p className="text-xs text-zinc-400 leading-relaxed">{ep.description}</p>
-                    </div>
-                  </div>
-
-                  <div className="p-5 pt-0">
-                    <a
-                      href={ep.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-zinc-700"
-                    >
-                      <Video className="w-4 h-4 text-yellow-400" /> Ver Episodio
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 8. NOTICIAS */}
-        {activeTab === 'noticias' && (
+        {/* =========================================================================
+            5. PESTAÑA: ACTUALIDAD (NOTICIAS Y COMUNICADOS)
+           ========================================================================= */}
+        {activeTab === 'actualidad' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
+            
             <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Medio Oficial</span>
-              <h2 className="text-3xl font-black text-white uppercase">📰 NOTICIAS DE EL LEÓN</h2>
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">MEDIO OFICIAL</span>
+              <h2 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">ACTUALIDAD</h2>
+              <p className="text-xs text-zinc-400">Noticias, comunicados y entrevistas del camino deportivo.</p>
             </div>
 
             <div className="space-y-4">
@@ -1223,176 +1310,33 @@ export default function App() {
                   <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 rounded uppercase">
                     SANTA CRUZ 2026
                   </span>
-                  <h3 className="text-xl font-black text-white uppercase">Lanzamiento Oficial de la Preventa Bolivia</h3>
+                  <h3 className="text-xl font-black text-white uppercase">Apertura Oficial de la Operación Santa Cruz</h3>
                   <p className="text-xs text-zinc-300 leading-relaxed">
-                    Apertura de la preventa de la indumentaria oficial para cubrir pasajes y gastos logísticos de la delegación en Santa Cruz de la Sierra.
+                    Comienza la preventa oficial para financiar el viaje y la logística del equipo en Bolivia 2026.
                   </p>
                 </div>
               )}
             </div>
+
           </div>
         )}
 
-        {/* 9. EL RING */}
-        {activeTab === 'elring' && (
-          <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Historial Deportivo</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL RING</h2>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                Registro transparente de combates amateur.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {peleasHistorial.map((p) => (
-                <div key={p.id} className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
-                        p.status === 'proximo' ? 'bg-red-950 text-red-400 border border-red-500/30' : 'bg-emerald-950 text-emerald-400'
-                      }`}>
-                        {p.resultado}
-                      </span>
-                      <span className="text-xs font-mono text-zinc-500">{p.fecha}</span>
-                    </div>
-                    <h4 className="text-lg font-black text-white uppercase mt-1">Joel Diaz VS {p.rival}</h4>
-                    <p className="text-xs text-zinc-400">{p.lugar} • {p.categoria}</p>
-                  </div>
-
-                  <div className="text-left sm:text-right">
-                    <span className="text-xs font-bold text-yellow-400 uppercase block">{p.metodo}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 10. LA HISTORIA */}
-        {activeTab === 'historia' && (
-          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Cronología Deportiva</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">LA HISTORIA</h2>
-            </div>
-
-            <div className="space-y-6 border-l-2 border-yellow-400 pl-6">
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-yellow-400 font-mono">2026 — ETAPA ACTUAL</span>
-                <h3 className="text-xl font-black text-white uppercase">Operación Santa Cruz</h3>
-                <p className="text-xs text-zinc-400">Inicio de la autogestión internacional y campamento deportivo en altura.</p>
-              </div>
-
-              <div className="space-y-1 pt-4">
-                <span className="text-xs font-bold text-zinc-500 font-mono">2025</span>
-                <h3 className="text-xl font-black text-white uppercase">Consolidación en Gimnasio IMAD</h3>
-                <p className="text-xs text-zinc-400">Temporada de combates amateur y estructuración del equipo de trabajo.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 11. EL LEÓN SE FINANCIA */}
-        {activeTab === 'financiacion' && (
-          <div className="space-y-8 max-w-4xl mx-auto animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Sistema Autogestionado</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL LEÓN SE FINANCIA</h2>
-            </div>
-
-            <div className="bg-zinc-950 border border-yellow-500/30 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <Utensils className="w-5 h-5 text-yellow-400" />
-                <h3 className="text-xl font-black text-white uppercase">Acciones Puntuales de Recaudación</h3>
-              </div>
-              {accionesTemporales.map((acc) => (
-                <div key={acc.id} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div>
-                    <h4 className="text-lg font-black text-white uppercase">{acc.title}</h4>
-                    <p className="text-xs text-zinc-400">{acc.descripcion}</p>
-                  </div>
-                  <button
-                    onClick={() => createComidaWhatsapp(acc)}
-                    className="bg-yellow-400 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase"
-                  >
-                    Encargar por WhatsApp
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 12. ALIADOS */}
-        {activeTab === 'aliados' && (
-          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Red de Apoyo</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">ALIADOS Y MARCAS</h2>
-            </div>
-
-            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 text-center space-y-5">
-              <h3 className="text-2xl font-black text-white uppercase">¿Querés sumarte como Aliado?</h3>
-              <button
-                onClick={createSponsorWhatsapp}
-                className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-8 py-3.5 rounded-xl text-xs uppercase tracking-wider"
-              >
-                QUIERO SER ALIADO — HABLAR POR WHATSAPP
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 13. LA MANADA */}
-        {activeTab === 'lamanada' && (
-          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Comunidad Oficial</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">LA MANADA</h2>
-            </div>
-
-            <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-yellow-500/30 rounded-2xl p-8 text-center space-y-5">
-              <h3 className="text-2xl font-black text-white uppercase">Acceso Privado</h3>
-              <a
-                href={whatsappChannelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3.5 rounded-xl text-xs uppercase tracking-wider"
-              >
-                <MessageCircle className="w-4 h-4 fill-black" /> QUIERO ENTRAR A LA MANADA
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* 14. EL ARCHIVO */}
-        {activeTab === 'archivo' && (
-          <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">Memoria Histórica</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">EL ARCHIVO</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl">
-                <span className="text-xs font-bold text-yellow-400 block font-mono">2026</span>
-                <h4 className="text-lg font-black text-white uppercase mt-1">Lanzamiento del Universo Digital</h4>
-                <p className="text-xs text-zinc-400">Integración de catálogo autogestionado, clases online, timer de ring y bitácora audiovisual.</p>
-              </div>
-            </div>
+        {/* PESTAÑA OCULTA ADMIN */}
+        {activeTab === 'admin' && (
+          <div className="animate-fade-in">
+            <Admin />
           </div>
         )}
 
       </main>
 
-      {/* FOOTER */}
+      {/* FOOTER GENERAL */}
       <footer className="border-t border-zinc-900 py-8 px-4 text-center text-xs text-zinc-600 space-y-2 mt-16">
         <p className="font-bold text-zinc-400">EL LEÓN — JOEL DIAZ (@joelbox_)</p>
         <p>Santo Tomé / Rosario, Argentina • 2026</p>
       </footer>
 
-      {/* MODAL DE AUTENTICACIÓN */}
+      {/* MODAL AUTH */}
       <AuthModal 
         isOpen={isAuthOpen} 
         onClose={() => setIsAuthOpen(false)} 
@@ -1401,3 +1345,4 @@ export default function App() {
     </div>
   );
 }
+
