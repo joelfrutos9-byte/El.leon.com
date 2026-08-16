@@ -18,19 +18,12 @@ import {
   Menu,
   X,
   ChevronRight,
-  Dumbbell,
   Layers,
   Sparkles,
-  Lock,
   PlayCircle,
-  FileText,
   Send,
   Target,
   Activity,
-  Key,
-  CheckCircle2,
-  Search,
-  Timer,
   User,
   LogOut,
   ShieldCheck,
@@ -40,13 +33,11 @@ import {
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
-import CalculadoraNutricional from './CalculadoraNutricional';
-import TabataTimer from './componentes/TabataTimer';
 import AuthModal from './componentes/AuthModal';
 
 export default function App() {
-  // Pestañas Principales (5 Módulos Unificados)
-  // 'el-leon' | 'operacion-santa-cruz' | 'leon-store' | 'entrenamiento' | 'actualidad'
+  // Pestañas Principales Unificadas
+  // 'el-leon' | 'operacion-santa-cruz' | 'leon-store' | 'actualidad'
   const [activeTab, setActiveTab] = useState('el-leon');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -59,7 +50,7 @@ export default function App() {
   const [orderQuantity, setOrderQuantity] = useState(1);
   const [checkoutStep, setCheckoutStep] = useState('catalogo'); // 'catalogo' | 'formulario' | 'transferencia'
 
-  // Formulario de Reserva
+  // Formulario de Reserva Directo (Sin login)
   const [buyerForm, setBuyerForm] = useState({
     nombreApellido: '',
     dni: '',
@@ -67,7 +58,7 @@ export default function App() {
     localidad: ''
   });
 
-  // CMS y Backend
+  // CMS Sanity & Backend Supabase
   const [noticiasCms, setNoticiasCms] = useState([]);
   const [cargandoNoticias, setCargandoNoticias] = useState(true);
 
@@ -75,30 +66,6 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState('alumno');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-
-  // Contenido dinámico de Supabase
-  const [posts, setPosts] = useState([]);
-  const [cargandoPosts, setCargandoPosts] = useState(true);
-
-  // Portal de Alumnos por Clave
-  const [studentKey, setStudentKey] = useState('');
-  const [activeStudentKey, setActiveStudentKey] = useState('');
-  const [studentPosts, setStudentPosts] = useState([]);
-  const [searchingStudent, setSearchingStudent] = useState(false);
-  const [studentSearched, setStudentSearched] = useState(false);
-
-  // Formulario de Diagnóstico Completo / Rutina Personalizada
-  const [showCustomForm, setShowCustomForm] = useState(false);
-  const [formData, setFormData] = useState({
-    nombre: '',
-    edad: '',
-    ciudad: '',
-    objetivo: 'Aprender Boxeo y Técnica',
-    nivel: 'Principiante (Desde cero)',
-    diasDisponibles: '3 días por semana',
-    lugar: 'En gimnasio',
-    lesiones: 'Ninguna'
-  });
 
   // Truco Secreto Admin (3 clics en el logo "EL LEÓN")
   const [logoClicks, setLogoClicks] = useState(0);
@@ -127,7 +94,7 @@ export default function App() {
       setActiveTab('admin');
     }
 
-    // Cargar noticias desde Sanity
+    // Cargar noticias / bitácora desde Sanity CMS
     const query = encodeURIComponent('*[_type in ["noticia", "post"]] | order(_createdAt desc)');
     const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${query}`;
 
@@ -143,8 +110,6 @@ export default function App() {
         console.log("Consulta Sanity fallback:", err);
         setCargandoNoticias(false);
       });
-
-    fetchPublicPosts();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -168,50 +133,6 @@ export default function App() {
     await supabase.auth.signOut();
   };
 
-  const fetchPublicPosts = async () => {
-    try {
-      setCargandoPosts(true);
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('access_type', 'public')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setPosts(data || []);
-    } catch (err) {
-      console.log("Error cargando contenidos públicos:", err.message);
-    } finally {
-      setCargandoPosts(false);
-    }
-  };
-
-  const handleSearchStudentKey = async (e) => {
-    e.preventDefault();
-    if (!studentKey.trim()) return;
-
-    try {
-      setSearchingStudent(true);
-      setStudentSearched(true);
-      const cleanKey = studentKey.trim().toLowerCase();
-      setActiveStudentKey(cleanKey);
-
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('password', cleanKey)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setStudentPosts(data || []);
-    } catch (err) {
-      console.log("Error buscando rutina de alumno:", err.message);
-      setStudentPosts([]);
-    } finally {
-      setSearchingStudent(false);
-    }
-  };
-
   const handleLogoClick = () => {
     const newCount = logoClicks + 1;
     setLogoClicks(newCount);
@@ -224,38 +145,16 @@ export default function App() {
     }
   };
 
-  const handleSendCustomForm = (e) => {
-    e.preventDefault();
-    if (!formData.nombre.trim() || !formData.edad.trim()) {
-      alert('Por favor completá tu nombre y edad.');
-      return;
-    }
-
-    const msg = `🥊 *FICHA DE EVALUACIÓN FÍSICA COMPLETA* 🥊\n\n` +
-      `👤 *Nombre:* ${formData.nombre}\n` +
-      `🎂 *Edad:* ${formData.edad} años\n` +
-      `📍 *Ciudad/Localidad:* ${formData.ciudad || 'No especificada'}\n\n` +
-      `🎯 *Objetivo Principal:* ${formData.objetivo}\n` +
-      `📊 *Nivel de Experiencia:* ${formData.nivel}\n` +
-      `📅 *Disponibilidad Semanal:* ${formData.diasDisponibles}\n` +
-      `🏋️ *Lugar de Entrenamiento:* ${formData.lugar}\n` +
-      `⚠️ *Lesiones/Molestias:* ${formData.lesiones}\n\n` +
-      `¡Hola Joel! Te envío mi ficha diagnóstica completada desde la App para consultar por mi plan a medida.`;
-
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
-  };
-
-  // NAVEGACIÓN PRINCIPAL (REDUCIDA A 5 PESTAÑAS)
+  // PESTAÑAS PRINCIPALES (4 MÓDULOS ENFOCADOS EN MARCA Y VENTA)
   const mainTabs = [
     { id: 'el-leon', label: 'EL LEÓN', sub: 'Joel Díaz & Filosofía', icon: UserCheck },
     { id: 'operacion-santa-cruz', label: 'OPERACIÓN SANTA CRUZ', sub: 'Rumbo a Bolivia 2026', icon: Zap, badge: 'MISIÓN' },
     { id: 'leon-store', label: 'LEÓN STORE', sub: 'Indumentaria & Merch', icon: ShoppingBag, badge: 'PREVENTA' },
-    { id: 'entrenamiento', label: 'ENTRENAMIENTO', sub: 'Clases, Timer & Nutrición', icon: Dumbbell },
-    { id: 'actualidad', label: 'ACTUALIDAD', sub: 'Noticias & Comunicados', icon: Newspaper },
-    ...(userRole === 'profesor' ? [{ id: 'admin', label: 'PANEL CREADOR', sub: 'Gestión & Rutinas', icon: ShieldCheck, badge: 'ADMIN' }] : [])
+    { id: 'actualidad', label: 'ACTUALIDAD', sub: 'Proceso, Drops & Noticias', icon: Newspaper },
+    ...(userRole === 'profesor' ? [{ id: 'admin', label: 'PANEL CREADOR', sub: 'Gestión & Productos', icon: ShieldCheck, badge: 'ADMIN' }] : [])
   ];
 
-  // PRODUCTOS Y PRECIOS EXACTOS SOLICITADOS
+  // CATALOGO DE PRODUCTOS
   const products = [
     {
       id: 'original-01',
@@ -270,7 +169,7 @@ export default function App() {
       image: '/1785149020942.png',
       badge: 'LÍNEA ORIGINAL',
       badgeColor: 'bg-zinc-800 text-yellow-400 border-yellow-500/30',
-      description: 'Corte oversize urbano. Algodón pesado de alta resistencia diseñado para el día a día y el gimnasio.',
+      description: 'Corte oversize urbano. Algodón pesado de alta resistencia diseñado para el día a día y representar la marca.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     },
     {
@@ -286,7 +185,7 @@ export default function App() {
       image: '/1785148963897.png',
       badge: '100% A BENEFICIO',
       badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: '100% de lo recaudado con los productos verdes está destinado a financiar el viaje y la participación de El León en Bolivia 2026.',
+      description: 'El 100% de lo recaudado con los productos verdes está destinado a financiar el viaje y la participación de El León en Bolivia 2026.',
       sizes: ['S', 'M', 'L', 'XL', 'XXL']
     },
     {
@@ -307,8 +206,8 @@ export default function App() {
     }
   ];
 
-  // Datos Operación Santa Cruz
-  const recaudado = 0; // Se mantiene editable
+  // Datos de Operación Santa Cruz
+  const recaudado = 0;
   const objetivo = 3000000;
   const porcentaje = Math.min(Math.round((recaudado / objetivo) * 100), 100);
 
@@ -319,9 +218,6 @@ export default function App() {
   const handleSelectTab = (id) => {
     setActiveTab(id);
     setMobileMenuOpen(false);
-    if (id === 'entrenamiento') {
-      fetchPublicPosts();
-    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -329,7 +225,7 @@ export default function App() {
     setSelectedSize(prev => ({ ...prev, [productId]: size }));
   };
 
-  // Iniciar proceso de reserva
+  // Iniciar reserva
   const handleStartReservation = (product) => {
     const size = selectedSize[product.id];
     if (!size) {
@@ -340,7 +236,7 @@ export default function App() {
     setCheckoutStep('formulario');
   };
 
-  // Enviar mensaje de reserva a WhatsApp
+  // Enviar pedido por WhatsApp
   const handleSendReservationWhatsapp = (e) => {
     e.preventDefault();
     if (!buyerForm.nombreApellido || !buyerForm.dni || !buyerForm.telefono || !buyerForm.localidad) {
@@ -378,7 +274,7 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           
-          {/* LOGO EL LEÓN */}
+          {/* LOGO EL LEÓN (3 CLICS -> MODO ADMIN) */}
           <div 
             className="flex items-center gap-2.5 cursor-pointer select-none" 
             onClick={handleLogoClick}
@@ -386,11 +282,11 @@ export default function App() {
           >
             <span className="text-xl font-black tracking-tighter text-yellow-400">EL LEÓN</span>
             <span className="text-[10px] bg-yellow-500/10 text-yellow-400 font-bold px-2 py-0.5 rounded border border-yellow-500/20 uppercase tracking-widest hidden sm:inline">
-              UNIVERSO DIGITAL
+              INDUMENTARIA & MARCA
             </span>
           </div>
 
-          {/* ACCIONES DE SESIÓN Y REDES */}
+          {/* REDES Y SESIÓN */}
           <div className="flex items-center gap-2">
             <a 
               href={instagramUrl}
@@ -402,13 +298,12 @@ export default function App() {
               <span>@joelbox_</span>
             </a>
 
-            {/* INDICADOR DE SESIÓN */}
             {session ? (
               <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
                 <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg border ${
                   userRole === 'profesor' ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-zinc-800 text-zinc-300 border-zinc-700'
                 }`}>
-                  {userRole === 'profesor' ? 'Entrenador' : 'Alumno'}
+                  {userRole === 'profesor' ? 'Admin' : 'Usuario'}
                 </span>
                 <button 
                   onClick={handleLogout}
@@ -428,7 +323,6 @@ export default function App() {
               </button>
             )}
 
-            {/* BOTÓN MENÚ MÓVIL */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-black px-3.5 py-1.5 rounded-xl text-xs uppercase tracking-wider transition-all"
@@ -439,7 +333,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* NAVEGACIÓN PRINCIPAL: LAS 5 PESTAÑAS */}
+        {/* NAVEGACIÓN PRINCIPAL: LAS 4 PESTAÑAS */}
         <div className="max-w-6xl mx-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {mainTabs.map(item => {
             const IconComponent = item.icon;
@@ -469,14 +363,14 @@ export default function App() {
         </div>
       </header>
 
-      {/* MENÚ MÓVIL DESPLEGABLE */}
+      {/* MENÚ MÓVIL */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-6 overflow-y-auto animate-fade-in">
           <div>
             <div className="flex justify-between items-center border-b border-zinc-800 pb-4 mb-6">
               <div>
                 <span className="text-xl font-black text-yellow-400 tracking-tighter block">EL LEÓN — NAVEGACIÓN</span>
-                <span className="text-xs text-zinc-400">Las 5 Pestañas de la Aplicación</span>
+                <span className="text-xs text-zinc-400">Las 4 Pestañas de la Aplicación</span>
               </div>
               <button 
                 onClick={() => setMobileMenuOpen(false)}
@@ -518,22 +412,22 @@ export default function App() {
           </div>
 
           <div className="pt-8 border-t border-zinc-900 text-center space-y-2">
-            <p className="text-xs text-zinc-400">Joel Díaz — Boxeador & Profesor • @joelbox_</p>
+            <p className="text-xs text-zinc-400">Joel Díaz — Boxeador & Creador • @joelbox_</p>
           </div>
         </div>
       )}
 
-      {/* RENDERIZADO DE LAS 5 PESTAÑAS */}
+      {/* RENDERIZADO PRINCIPAL */}
       <main className="max-w-6xl mx-auto px-4 pt-6">
 
-        {/* BANNER MODO ENTRENADOR */}
+        {/* BANNER ADMIN */}
         {session && userRole === 'profesor' && activeTab !== 'admin' && (
           <div className="mb-6 bg-yellow-400/10 border border-yellow-400/30 p-4 rounded-2xl flex justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-5 h-5 text-yellow-400 shrink-0" />
               <div>
-                <h4 className="text-xs font-black text-yellow-400 uppercase">Modo Entrenador Activado</h4>
-                <p className="text-[11px] text-zinc-400">Tenés acceso habilitado al Panel Creador para subir rutinas.</p>
+                <h4 className="text-xs font-black text-yellow-400 uppercase">Panel Creador Habilitado</h4>
+                <p className="text-[11px] text-zinc-400">Podés agregar o editar prendas y contenido de la marca.</p>
               </div>
             </div>
             <button
@@ -546,12 +440,11 @@ export default function App() {
         )}
 
         {/* =========================================================================
-            1. PESTAÑA: EL LEÓN (IDENTIDAD, FILOSOFÍA Y MANIFIESTO DE JOEL)
+            1. PESTAÑA: EL LEÓN (IDENTIDAD, HISTORIA Y FILOSOFÍA DE JOEL)
            ========================================================================= */}
         {activeTab === 'el-leon' && (
           <div className="space-y-12 animate-fade-in max-w-4xl mx-auto">
             
-            {/* CABECERA & FRASE PRINCIPAL */}
             <section className="relative rounded-3xl overflow-hidden border border-zinc-800 p-8 sm:p-12 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-center space-y-6">
               <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-500/20 px-3.5 py-1.5 rounded-full text-yellow-400 text-xs font-black uppercase tracking-widest">
                 <Sparkle className="w-3.5 h-3.5" /> MARCA, IDENTIDAD & FILOSOFÍA
@@ -561,7 +454,6 @@ export default function App() {
                 "Soy un chico normal viviendo una vida de <span className="text-yellow-400">superhéroe</span>."
               </h1>
 
-              {/* COMPARACIÓN CON SPIDER-MAN */}
               <div className="max-w-2xl mx-auto bg-black/60 border border-zinc-800 p-5 rounded-2xl text-left space-y-3">
                 <span className="text-xs font-black text-yellow-400 uppercase tracking-widest block">🕷️ La Comparación con Spider-Man</span>
                 <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed italic">
@@ -585,10 +477,8 @@ export default function App() {
               </div>
             </section>
 
-            {/* MÓDULOS DE CONTENIDO A - J */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* A. QUIÉN SOY */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <User className="w-5 h-5" /> A. Quién Soy
@@ -598,7 +488,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* B. QUÉ SIGNIFICA EL LEÓN */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <Flame className="w-5 h-5" /> B. Qué significa El León
@@ -608,7 +497,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* C. MI CAMINO DEPORTIVO */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-3">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <Trophy className="w-5 h-5" /> C. Mi Camino Deportivo
@@ -621,7 +509,6 @@ export default function App() {
                 </ul>
               </div>
 
-              {/* D. MIS LOGROS MÁS IMPORTANTES */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-3">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <Award className="w-5 h-5" /> D. Logros Destacados
@@ -634,7 +521,6 @@ export default function App() {
                 </ul>
               </div>
 
-              {/* E. MI OBJETIVO */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-3 md:col-span-2">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <Target className="w-5 h-5" /> E. Mi Objetivo
@@ -651,7 +537,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* F. BOLIVIA */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <Flag className="w-5 h-5" /> F. Bolivia
@@ -661,7 +546,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* G. MI FILOSOFÍA */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <Activity className="w-5 h-5" /> G. Mi Filosofía
@@ -673,17 +557,15 @@ export default function App() {
                 </div>
               </div>
 
-              {/* H. QUIÉN SOY FUERA DEL RING */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <UserCheck className="w-5 h-5" /> H. Fuera del Ring
                 </h3>
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  "Solo soy un chico normal. Soy el profe buena onda. El pibe que va todos los días. El enano. Satanás para mi mamá. Todos ellos soy yo. Pero en definitiva, soy normal."
+                  "Solo soy un chico normal. El pibe que va todos los días. El enano. Satanás para mi mamá. Todos ellos soy yo. Pero en definitiva, soy normal."
                 </p>
               </div>
 
-              {/* I. MÁS ALLÁ DEL BOXEO */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <Tv className="w-5 h-5" /> I. Más allá del Boxeo
@@ -692,11 +574,10 @@ export default function App() {
                   <li>Creación de contenido</li>
                   <li>Deseo de estudiar periodismo el año que viene</li>
                   <li>Afinidad por la cumbia como buen santafesino</li>
-                  <li>Disfrute de la familia, los alumnos y los amigos</li>
+                  <li>Disfrute de la familia y los amigos</li>
                 </ul>
               </div>
 
-              {/* J. EL ORIGEN DE LA MARCA */}
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-2xl space-y-2 md:col-span-2">
                 <h3 className="text-lg font-black text-yellow-400 uppercase flex items-center gap-2">
                   <Sparkles className="w-5 h-5" /> J. El Origen de la Marca
@@ -708,7 +589,6 @@ export default function App() {
 
             </div>
 
-            {/* K. MENSAJE FINAL */}
             <div className="bg-yellow-400 text-black p-8 rounded-3xl text-center space-y-2 shadow-2xl">
               <h3 className="text-xs font-black uppercase tracking-widest text-zinc-900">K. MENSAJE FINAL</h3>
               <p className="text-lg sm:text-2xl font-black uppercase tracking-tight">
@@ -737,7 +617,6 @@ export default function App() {
               </p>
             </div>
 
-            {/* TABLERO DE OBJETIVO Y PROGRESO */}
             <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -753,7 +632,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Barra de Progreso */}
               <div className="w-full bg-zinc-900 h-5 rounded-full overflow-hidden p-0.5 border border-zinc-800">
                 <div 
                   className="bg-gradient-to-r from-emerald-500 to-yellow-400 h-full rounded-full transition-all duration-700"
@@ -777,7 +655,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* FRASE OBLIGATORIA PARA PRODUCTOS VERDES */}
             <div className="bg-emerald-950/80 border border-emerald-500/50 p-6 rounded-2xl text-center space-y-2">
               <span className="text-xs font-black text-emerald-400 uppercase tracking-widest block">COMPROMISO CON LA MISIÓN</span>
               <p className="text-base sm:text-xl font-black text-white uppercase">
@@ -785,7 +662,6 @@ export default function App() {
               </p>
             </div>
 
-            {/* PRODUCTOS VERDES ASOCIADOS */}
             <div className="space-y-4">
               <h3 className="text-xl font-black text-white uppercase flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-emerald-400" />
@@ -868,7 +744,6 @@ export default function App() {
               <p className="text-xs text-zinc-400">Venta exclusiva por sistema de PREVENTA y confección bajo pedido.</p>
             </div>
 
-            {/* SUB-NAVEGACIÓN INTERNA STORE */}
             <div className="flex justify-center gap-2 border-b border-zinc-800 pb-3 overflow-x-auto scrollbar-none">
               {[
                 { id: 'catalogo', label: 'Catálogo' },
@@ -888,7 +763,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* VISTA 1: CATÁLOGO DE PRODUCTOS */}
             {storeSubTab === 'catalogo' && checkoutStep === 'catalogo' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {products.map((p) => (
@@ -949,7 +823,6 @@ export default function App() {
               </div>
             )}
 
-            {/* FORMULARIO DE RESERVA DIRECTO (SIN LOGIN) */}
             {checkoutStep === 'formulario' && selectedProduct && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6 max-w-2xl mx-auto">
                 <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
@@ -1024,7 +897,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* RESUMEN DE TU RESERVA AUTOMÁTICO */}
                   <div className="bg-black p-5 rounded-2xl border border-yellow-500/30 space-y-2 mt-4">
                     <span className="text-yellow-400 font-black uppercase tracking-wider block">RESUMEN DE TU RESERVA</span>
                     <div className="flex justify-between text-zinc-300">
@@ -1063,7 +935,6 @@ export default function App() {
               </div>
             )}
 
-            {/* PAGO DE SEÑA Y DATOS DE TRANSFERENCIA */}
             {checkoutStep === 'transferencia' && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6 max-w-xl mx-auto text-center animate-fade-in">
                 <span className="text-3xl block">🦁</span>
@@ -1107,7 +978,6 @@ export default function App() {
               </div>
             )}
 
-            {/* VISTA 2: CÓMO FUNCIONA */}
             {storeSubTab === 'como-comprar' && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6">
                 <h3 className="text-xl font-black text-white uppercase text-center">CÓMO FUNCIONA LA PREVENTA</h3>
@@ -1129,7 +999,6 @@ export default function App() {
               </div>
             )}
 
-            {/* VISTA 3: PREGUNTAS FRECUENTES */}
             {storeSubTab === 'faq' && (
               <div className="space-y-4">
                 <div className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl space-y-1">
@@ -1143,7 +1012,6 @@ export default function App() {
               </div>
             )}
 
-            {/* VISTA 4: LA MANADA */}
             {storeSubTab === 'manada' && (
               <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-yellow-500/30 p-8 rounded-3xl text-center space-y-4">
                 <span className="text-3xl block">🦁</span>
@@ -1166,241 +1034,25 @@ export default function App() {
         )}
 
         {/* =========================================================================
-            4. PESTAÑA: ENTRENAMIENTO (CLASES, RUTINAS Y TIMER BOXEO)
-           ========================================================================= */}
-        {activeTab === 'entrenamiento' && (
-          <div className="space-y-10 animate-fade-in max-w-4xl mx-auto">
-            
-            <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">CENTRO DE ENTRENAMIENTO</span>
-              <h2 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">ENTRENAMIENTO</h2>
-            </div>
-
-            {/* TIMER DE BOXEO REUTILIZADO */}
-            <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-3xl space-y-4">
-              <div className="flex items-center gap-2">
-                <Timer className="w-5 h-5 text-yellow-400" />
-                <h3 className="text-xl font-black text-white uppercase">Timer Boxeo (Reloj de Ring)</h3>
-              </div>
-              <TabataTimer />
-            </div>
-
-            {/* CALCULADORA NUTRICIONAL */}
-            <div>
-              <CalculadoraNutricional />
-            </div>
-
-            {/* PORTAL PRIVADO DE ALUMNO POR CLAVE */}
-            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-4">
-              <div className="flex items-center gap-2">
-                <Key className="w-5 h-5 text-yellow-400" />
-                <h3 className="text-xl font-black text-white uppercase">Acceso Alumnos — Clave Personal</h3>
-              </div>
-              <p className="text-xs text-zinc-400">
-                Ingresá la clave que te dio Joel para ver tu rutina asignada:
-              </p>
-
-              <form onSubmit={handleSearchStudentKey} className="flex gap-2 max-w-md">
-                <input
-                  type="text"
-                  placeholder="Ej: marcos2026, juan-box"
-                  value={studentKey}
-                  onChange={(e) => setStudentKey(e.target.value)}
-                  className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400"
-                />
-                <button
-                  type="submit"
-                  disabled={searchingStudent}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase"
-                >
-                  {searchingStudent ? '...' : 'Ingresar'}
-                </button>
-              </form>
-
-              {studentSearched && (
-                <div className="pt-4 border-t border-zinc-900">
-                  {studentPosts.length > 0 ? (
-                    <div className="space-y-4">
-                      {studentPosts.map((post) => (
-                        <div key={post.id} className="bg-zinc-900 border border-yellow-500/50 rounded-2xl p-5 space-y-3">
-                          <h4 className="text-lg font-black text-white uppercase">{post.title}</h4>
-                          <p className="text-xs text-zinc-300 whitespace-pre-line bg-black/50 p-4 rounded-xl">{post.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-xs text-red-400">No encontramos ninguna rutina asignada a la clave "{activeStudentKey}".</div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* EVALUACIÓN FÍSICA PERSONALIZADA COMPLETA */}
-            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-900 pb-4">
-                <div>
-                  <h3 className="text-xl font-black text-white uppercase">PEDÍ TU PLAN PERSONALIZADO</h3>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    Completá tu ficha física para recibir un programa técnico y físico adecuado a tus metas.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowCustomForm(!showCustomForm)}
-                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all"
-                >
-                  {showCustomForm ? 'CERRAR FICHA' : 'COMPLETAR FICHA'}
-                </button>
-              </div>
-
-              {showCustomForm && (
-                <form onSubmit={handleSendCustomForm} className="space-y-4 text-xs animate-fade-in">
-                  
-                  {/* FILA 1: DATOS PERSONALES */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block font-bold text-zinc-400 uppercase mb-1">Tu Nombre *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ej: Marcos Pérez"
-                        value={formData.nombre}
-                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-zinc-400 uppercase mb-1">Edad *</label>
-                      <input
-                        type="number"
-                        required
-                        placeholder="Ej: 24"
-                        value={formData.edad}
-                        onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-zinc-400 uppercase mb-1">Ciudad / Localidad</label>
-                      <input
-                        type="text"
-                        placeholder="Ej: Santo Tomé / Rosario"
-                        value={formData.ciudad}
-                        onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
-                      />
-                    </div>
-                  </div>
-
-                  {/* FILA 2: OBJETIVO Y NIVEL */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block font-bold text-zinc-400 uppercase mb-1">Objetivo Principal *</label>
-                      <select
-                        value={formData.objetivo}
-                        onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
-                      >
-                        <option value="Aprender Boxeo y Técnica">Aprender Boxeo y Técnica</option>
-                        <option value="Bajar de peso y quemar grasa">Bajar de peso y quemar grasa</option>
-                        <option value="Ganar masa muscular y fuerza">Ganar masa muscular y fuerza</option>
-                        <option value="Preparación Física para Combate">Preparación Física para Combate</option>
-                        <option value="Acondicionamiento físico general">Acondicionamiento físico general</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-zinc-400 uppercase mb-1">Nivel de Experiencia *</label>
-                      <select
-                        value={formData.nivel}
-                        onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
-                      >
-                        <option value="Principiante (Desde cero)">Principiante (Desde cero)</option>
-                        <option value="Intermedio (Ya entrené antes)">Intermedio (Ya entrené antes)</option>
-                        <option value="Avanzado (Boxeador / Atleta activo)">Avanzado (Boxeador / Atleta activo)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* FILA 3: DISPONIBILIDAD Y LUGAR */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block font-bold text-zinc-400 uppercase mb-1">Disponibilidad Semanal *</label>
-                      <select
-                        value={formData.diasDisponibles}
-                        onChange={(e) => setFormData({ ...formData, diasDisponibles: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
-                      >
-                        <option value="2 días por semana">2 días por semana</option>
-                        <option value="3 días por semana">3 días por semana</option>
-                        <option value="4 a 5 días por semana">4 a 5 días por semana</option>
-                        <option value="Todos los días">Todos los días</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-zinc-400 uppercase mb-1">¿Dónde vas a entrenar? *</label>
-                      <select
-                        value={formData.lugar}
-                        onChange={(e) => setFormData({ ...formData, lugar: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
-                      >
-                        <option value="En gimnasio tradicional">En gimnasio tradicional</option>
-                        <option value="En casa (sin equipamiento)">En casa (sin equipamiento)</option>
-                        <option value="En casa (con bolsa / mancuernas)">En casa (con bolsa / mancuernas)</option>
-                        <option value="Al aire libre / Parque">Al aire libre / Parque</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* FILA 4: LESIONES */}
-                  <div>
-                    <label className="block font-bold text-zinc-400 uppercase mb-1">Lesiones o Molestias Físicas</label>
-                    <input
-                      type="text"
-                      placeholder="Ej: Dolor leve en rodilla derecha, hombro, etc. (O escribí 'Ninguna')"
-                      value={formData.lesiones}
-                      onChange={(e) => setFormData({ ...formData, lesiones: e.target.value })}
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
-                    />
-                  </div>
-
-                  <button 
-                    type="submit" 
-                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
-                  >
-                    <Send className="w-4 h-4 fill-black" />
-                    ENVIAR FICHA POR WHATSAPP A JOEL
-                  </button>
-                </form>
-              )}
-            </div>
-
-          </div>
-        )}
-
-        {/* =========================================================================
-            5. PESTAÑA: ACTUALIDAD (NOTICIAS Y COMUNICADOS)
+            4. PESTAÑA: ACTUALIDAD (BITÁCORA, PROCESO DE LA MARCA & COMUNICADOS)
            ========================================================================= */}
         {activeTab === 'actualidad' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             
             <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">MEDIO OFICIAL</span>
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">DETRÁS DE ESCENA Y NOTICIAS</span>
               <h2 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">ACTUALIDAD</h2>
-              <p className="text-xs text-zinc-400">Noticias, comunicados y entrevistas del camino deportivo.</p>
+              <p className="text-xs text-zinc-400">El proceso de confección, muestras, lanzamientos y comunicados oficiales.</p>
             </div>
 
             <div className="space-y-4">
               {cargandoNoticias ? (
-                <div className="text-center text-xs text-zinc-500 py-6 font-mono">Cargando noticias desde Sanity...</div>
+                <div className="text-center text-xs text-zinc-500 py-6 font-mono">Cargando bitácora desde Sanity...</div>
               ) : noticiasCms.length > 0 ? (
                 noticiasCms.map((n, idx) => (
                   <div key={n._id || idx} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
                     <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 rounded uppercase">
-                      {n.categoria || 'OFICIAL'}
+                      {n.categoria || 'BITÁCORA DE MARCA'}
                     </span>
                     <h3 className="text-xl font-black text-white uppercase">{n.titulo || n.title}</h3>
                     <p className="text-xs text-zinc-300 leading-relaxed">{n.resumen || n.summary}</p>
@@ -1409,11 +1061,11 @@ export default function App() {
               ) : (
                 <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
                   <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 rounded uppercase">
-                    SANTA CRUZ 2026
+                    PROCESO DE MARCA
                   </span>
-                  <h3 className="text-xl font-black text-white uppercase">Apertura Oficial de la Operación Santa Cruz</h3>
+                  <h3 className="text-xl font-black text-white uppercase">Apertura Oficial de la Preventa</h3>
                   <p className="text-xs text-zinc-300 leading-relaxed">
-                    Comienza la preventa oficial para financiar el viaje y la logística del equipo en Bolivia 2026.
+                    Lanzamiento oficial de la indumentaria de la Operación Santa Cruz. Seguí por acá los avances de producción, telas y empaquetado.
                   </p>
                 </div>
               )}
