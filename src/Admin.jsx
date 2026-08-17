@@ -1,401 +1,315 @@
-import React, { useState } from 'react'
-import { supabase } from './supabaseClient'
-import { Lock, PlusCircle, CheckCircle, AlertCircle, UserCheck, Search, Activity, Scale, Calendar } from 'lucide-react'
+import React, { useState } from 'react';
+import { supabase } from './supabaseClient';
+import { PackagePlus, FileText, Check, AlertCircle } from 'lucide-react';
 
 export default function Admin() {
-  const [pin, setPin] = useState('')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [pinError, setPinError] = useState(false)
-  const [activeTabAdmin, setActiveTabAdmin] = useState('cargar') // 'cargar' o 'supervisar'
+  const [tabAdmin, setTabAdmin] = useState('post'); // 'post' | 'producto'
+  const [loading, setLoading] = useState(false);
+  const [mensaje, setMensaje] = useState(null);
 
-  // Formulario de contenido
-  const [title, setTitle] = useState('')
-  const [category, setCategory] = useState('Rutina Personalizada')
-  const [accessType, setAccessType] = useState('private')
-  const [videoUrl, setVideoUrl] = useState('')
-  const [description, setDescription] = useState('')
-  const [clientKey, setClientKey] = useState('')
+  // Formulario Post (Actualidad)
+  const [postForm, setPostForm] = useState({
+    title: '',
+    category: 'Vlog / Diario Deportivo',
+    video_url: '',
+    description: ''
+  });
 
-  // Supervisión de Alumno
-  const [searchKey, setSearchKey] = useState('')
-  const [alumnosRegistros, setAlumnosRegistros] = useState([])
-  const [cargandoSupervision, setCargandoSupervision] = useState(false)
-  const [busquedaRealizada, setBusquedaRealizada] = useState(false)
+  // Formulario Producto (León Store)
+  const [prodForm, setProdForm] = useState({
+    name: '',
+    tagline: '',
+    line: 'LÍNEA ORIGINAL',
+    price: '',
+    deposit: '',
+    image: '',
+    badge: 'PREVENTA',
+    is_green: false,
+    description: '',
+    sizes: 'S, M, L, XL, XXL'
+  });
 
-  // Estados de envío
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState(null)
-
-  const PIN_CORRECTO = '0811'
-
-  const handleLogin = (e) => {
-    e.preventDefault()
-    if (pin === PIN_CORRECTO) {
-      setIsAuthenticated(true)
-      setPinError(false)
-    } else {
-      setPinError(true)
-    }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage(null)
-
-    if (accessType === 'private' && !clientKey.trim()) {
-      setMessage({ type: 'error', text: 'Debes definir una clave única para el alumno.' })
-      setLoading(false)
-      return
-    }
+  // Guardar Post
+  const handleSavePost = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMensaje(null);
 
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .insert([
-          {
-            title,
-            category,
-            access_type: accessType,
-            video_url: videoUrl,
-            description,
-            password: accessType === 'private' ? clientKey.trim().toLowerCase() : null,
-          }
-        ])
+      const { error } = await supabase.from('posts').insert([postForm]);
+      if (error) throw error;
 
-      if (error) throw error
-
-      setMessage({ 
-        type: 'success', 
-        text: accessType === 'private' 
-          ? `¡Rutina asignada al alumno con clave "${clientKey.trim().toLowerCase()}"!` 
-          : '¡Publicación pública guardada!' 
-      })
-
-      setTitle('')
-      setVideoUrl('')
-      setDescription('')
-      setClientKey('')
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Error al guardar: ' + error.message })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleBuscarAlumno = async (e) => {
-    e.preventDefault()
-    if (!searchKey.trim()) return
-
-    setCargandoSupervision(true)
-    setBusquedaRealizada(true)
-
-    try {
-      const { data, error } = await supabase
-        .from('registros_alumnos')
-        .select('*')
-        .eq('student_key', searchKey.trim().toLowerCase())
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setAlumnosRegistros(data || [])
+      setMensaje({ type: 'success', text: '¡Publicación subida a Actualidad con éxito!' });
+      setPostForm({ title: '', category: 'Vlog / Diario Deportivo', video_url: '', description: '' });
     } catch (err) {
-      console.log('Error buscando registros:', err.message)
-      setAlumnosRegistros([])
+      setMensaje({ type: 'error', text: `Error: ${err.message}` });
     } finally {
-      setCargandoSupervision(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // PANTALLA DE ACCESO POR PIN
-  if (!isAuthenticated) {
-    return (
-      <div style={{ padding: '20px', maxWidth: '400px', margin: '40px auto', textAlign: 'center', backgroundColor: '#111', color: '#fff', borderRadius: '16px', border: '1px solid #333' }}>
-        <Lock size={48} color="#ffde00" style={{ marginBottom: '16px' }} />
-        <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>Panel Creador - El León</h2>
-        <p style={{ color: '#aaa', fontSize: '13px', marginBottom: '20px' }}>Ingresá tu PIN para administrar contenido y supervisar alumnos</p>
+  // Guardar Producto
+  const handleSaveProduct = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMensaje(null);
 
-        <form onSubmit={handleLogin}>
-          <input
-            type="password"
-            placeholder="PIN de acceso"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              fontSize: '18px',
-              textAlign: 'center',
-              borderRadius: '8px',
-              border: '1px solid #444',
-              backgroundColor: '#222',
-              color: '#fff',
-              marginBottom: '12px',
-              boxSizing: 'border-box'
-            }}
-          />
-          {pinError && <p style={{ color: '#ff4d4d', fontSize: '14px', marginBottom: '12px' }}>PIN incorrecto</p>}
-          <button
-            type="submit"
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#ffde00',
-              color: '#000',
-              fontWeight: 'bold',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '15px'
-            }}
-          >
-            Ingresar al Panel
-          </button>
-        </form>
-      </div>
-    )
-  }
+    const priceNum = parseFloat(prodForm.price) || 0;
+    const depositNum = parseFloat(prodForm.deposit) || (priceNum / 2);
+    const balanceNum = priceNum - depositNum;
+    const sizesArray = prodForm.sizes.split(',').map(s => s.trim()).filter(Boolean);
 
-  // PANTALLA DEL PANEL DE CONTROL
+    try {
+      const { error } = await supabase.from('products').insert([{
+        name: prodForm.name,
+        tagline: prodForm.tagline,
+        line: prodForm.line,
+        price: priceNum,
+        deposit: depositNum,
+        balance: balanceNum,
+        image: prodForm.image,
+        badge: prodForm.badge,
+        is_green: prodForm.is_green,
+        description: prodForm.description,
+        sizes: sizesArray
+      }]);
+
+      if (error) throw error;
+
+      setMensaje({ type: 'success', text: '¡Producto cargado en León Store con éxito!' });
+      setProdForm({
+        name: '', tagline: '', line: 'LÍNEA ORIGINAL', price: '', deposit: '',
+        image: '', badge: 'PREVENTA', is_green: false, description: '', sizes: 'S, M, L, XL, XXL'
+      });
+    } catch (err) {
+      setMensaje({ type: 'error', text: `Error: ${err.message}` });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={{ padding: '20px', maxWidth: '650px', margin: '0 auto', color: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>🥊 Panel de Control Creador</h2>
-        <button 
-          onClick={() => setIsAuthenticated(false)}
-          style={{ background: 'transparent', border: '1px solid #555', color: '#aaa', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
-        >
-          Salir
-        </button>
-      </div>
-
-      {/* BOTONES NAVEGACIÓN PANEL */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+    <div className="max-w-2xl mx-auto bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6">
+      
+      {/* Botones de alternancia */}
+      <div className="flex gap-2 border-b border-zinc-800 pb-4">
         <button
-          onClick={() => setActiveTabAdmin('cargar')}
-          style={{
-            flex: 1,
-            padding: '10px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: activeTabAdmin === 'cargar' ? '#ffde00' : '#222',
-            color: activeTabAdmin === 'cargar' ? '#000' : '#fff',
-            fontWeight: 'bold',
-            fontSize: '13px',
-            cursor: 'pointer'
-          }}
+          type="button"
+          onClick={() => { setTabAdmin('post'); setMensaje(null); }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${
+            tabAdmin === 'post' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400'
+          }`}
         >
-          ➕ Asignar / Cargar Rutina
+          <FileText className="w-4 h-4" />
+          Subir a Actualidad
         </button>
 
         <button
-          onClick={() => setActiveTabAdmin('supervisar')}
-          style={{
-            flex: 1,
-            padding: '10px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: activeTabAdmin === 'supervisar' ? '#ffde00' : '#222',
-            color: activeTabAdmin === 'supervisar' ? '#000' : '#fff',
-            fontWeight: 'bold',
-            fontSize: '13px',
-            cursor: 'pointer'
-          }}
+          type="button"
+          onClick={() => { setTabAdmin('producto'); setMensaje(null); }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${
+            tabAdmin === 'producto' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400'
+          }`}
         >
-          📊 Supervisar Alumnos
+          <PackagePlus className="w-4 h-4" />
+          Cargar Producto Store
         </button>
       </div>
 
-      {activeTabAdmin === 'cargar' ? (
-        <div>
-          {message && (
-            <div style={{
-              padding: '12px',
-              borderRadius: '8px',
-              marginBottom: '20px',
-              backgroundColor: message.type === 'success' ? '#1b4d2e' : '#4d1b1b',
-              color: message.type === 'success' ? '#6be698' : '#e66b6b',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '13px'
-            }}>
-              {message.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-              {message.text}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#ccc' }}>Tipo de Publicación *</label>
-              <select
-                value={accessType}
-                onChange={(e) => setAccessType(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#fff', boxSizing: 'border-box' }}
-              >
-                <option value="private">🔒 Rutina Personalizada (Privado para un alumno)</option>
-                <option value="public">🌐 Clase / Video Público (Para todos)</option>
-              </select>
-            </div>
-
-            {accessType === 'private' && (
-              <div style={{ backgroundColor: '#181818', padding: '14px', borderRadius: '10px', border: '1px solid #ffde00' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#ffde00', fontWeight: 'bold' }}>
-                  🔑 Clave de Acceso Única para el Alumno *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej: marcos2026, juan-box, etc."
-                  value={clientKey}
-                  onChange={(e) => setClientKey(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ffde00', backgroundColor: '#000', color: '#fff', boxSizing: 'border-box' }}
-                />
-              </div>
-            )}
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#ccc' }}>Título de la Rutina / Clase *</label>
-              <input
-                type="text"
-                required
-                placeholder="Ej: Rutina Bloque Fuerza y Sparring - Marcos"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#fff', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#ccc' }}>Categoría</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#fff', boxSizing: 'border-box' }}
-              >
-                <option value="Rutina Personalizada">Rutina Personalizada</option>
-                <option value="Boxeo Técnico">Boxeo Técnico</option>
-                <option value="Acondicionamiento">Acondicionamiento Físico</option>
-                <option value="Vlog / Diario">Vlog / Diario Deportivo</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#ccc' }}>Link del Video *</label>
-              <input
-                type="url"
-                required
-                placeholder="https://..."
-                value={videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#fff', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#ccc' }}>Instrucciones / Descripción detallada</label>
-              <textarea
-                rows="5"
-                placeholder="Escribí los ejercicios, rounds, descansos, repeticiones..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#fff', boxSizing: 'border-box', resize: 'vertical' }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                padding: '12px',
-                backgroundColor: '#ffde00',
-                color: '#000',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '15px',
-                marginTop: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <PlusCircle size={20} />
-              {loading ? 'Guardando...' : 'Asignar / Publicar Rutina'}
-            </button>
-          </form>
-        </div>
-      ) : (
-        /* VISTA DE SUPERVISIÓN DE ALUMNOS */
-        <div style={{ backgroundColor: '#111', padding: '20px', borderRadius: '12px', border: '1px solid #222' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', color: '#ffde00' }}>
-            🔍 Supervisar Progreso de Alumnos
-          </h3>
-          <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '16px' }}>
-            Ingresá la clave del alumno para ver sus días entrenados, RPE promedio, evolución de peso y notas.
-          </p>
-
-          <form onSubmit={handleBuscarAlumno} style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            <input
-              type="text"
-              placeholder="Clave del alumno (Ej: marcos2026)"
-              value={searchKey}
-              onChange={(e) => setSearchKey(e.target.value)}
-              style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #444', backgroundColor: '#222', color: '#fff' }}
-            />
-            <button
-              type="submit"
-              style={{ backgroundColor: '#ffde00', color: '#000', fontWeight: 'bold', border: 'none', padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}
-            >
-              Buscar
-            </button>
-          </form>
-
-          {cargandoSupervision ? (
-            <p style={{ fontSize: '12px', color: '#888', textAlign: 'center' }}>Cargando registros...</p>
-          ) : busquedaRealizada && (
-            <div>
-              {alumnosRegistros.length === 0 ? (
-                <p style={{ fontSize: '13px', color: '#ff4d4d', textAlign: 'center' }}>
-                  No hay entrenamientos registrados aún para la clave "{searchKey}".
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <p style={{ fontSize: '13px', color: '#6be698', fontWeight: 'bold' }}>
-                    ¡{alumnosRegistros.length} sesiones registradas por el alumno!
-                  </p>
-
-                  {alumnosRegistros.map((reg) => (
-                    <div key={reg.id} style={{ backgroundColor: '#1a1a1a', padding: '12px', borderRadius: '8px', border: '1px solid #333' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
-                        <span style={{ color: '#aaa' }}>
-                          📅 {new Date(reg.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                        </span>
-                        <span style={{ color: reg.completado ? '#6be698' : '#e66b6b', fontWeight: 'bold' }}>
-                          {reg.completado ? 'CUMPLIDO ✅' : 'INCOMPLETO ❌'}
-                        </span>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#fff', marginBottom: '6px' }}>
-                        <span>⚡ RPE: <strong style={{ color: '#ffde00' }}>{reg.intensidad}/10</strong></span>
-                        {reg.peso && <span>⚖️ Peso: <strong>{reg.peso} kg</strong></span>}
-                      </div>
-
-                      {reg.notas && (
-                        <p style={{ fontSize: '12px', color: '#ccc', fontStyle: 'italic', margin: 0, backgroundColor: '#000', padding: '8px', borderRadius: '6px' }}>
-                          "{reg.notas}"
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+      {/* Alertas */}
+      {mensaje && (
+        <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
+          mensaje.type === 'success' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-red-950 text-red-400 border border-red-500/30'
+        }`}>
+          {mensaje.type === 'success' ? <Check className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+          <span>{mensaje.text}</span>
         </div>
       )}
+
+      {/* FORMULARIO POSTS */}
+      {tabAdmin === 'post' && (
+        <form onSubmit={handleSavePost} className="space-y-4 text-xs">
+          <div>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Título *</label>
+            <input
+              type="text"
+              required
+              placeholder="Ej: Desde Adentro #01 | Primer Festival"
+              value={postForm.title}
+              onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Categoría</label>
+            <select
+              value={postForm.category}
+              onChange={(e) => setPostForm({ ...postForm, category: e.target.value })}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+            >
+              <option value="Vlog / Diario Deportivo">Vlog / Diario Deportivo</option>
+              <option value="Noticia / Comunicado">Noticia / Comunicado</option>
+              <option value="Operación Santa Cruz">Operación Santa Cruz</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Link del Video (YouTube)</label>
+            <input
+              type="text"
+              placeholder="https://youtu.be/..."
+              value={postForm.video_url}
+              onChange={(e) => setPostForm({ ...postForm, video_url: e.target.value })}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Descripción</label>
+            <textarea
+              rows="4"
+              placeholder="Escribí el texto de la publicación..."
+              value={postForm.description}
+              onChange={(e) => setPostForm({ ...postForm, description: e.target.value })}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400 resize-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-wider"
+          >
+            {loading ? 'Publicando...' : 'Publicar en Actualidad'}
+          </button>
+        </form>
+      )}
+
+      {/* FORMULARIO PRODUCTOS */}
+      {tabAdmin === 'producto' && (
+        <form onSubmit={handleSaveProduct} className="space-y-4 text-xs">
+          <div>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Nombre del Producto *</label>
+            <input
+              type="text"
+              required
+              placeholder="Ej: EL LEÓN — HOODIE NEGRO"
+              value={prodForm.name}
+              onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">Subtítulo / Bajada</label>
+              <input
+                type="text"
+                placeholder="Ej: BUZO OVERSIZE HEAVY COTTON"
+                value={prodForm.tagline}
+                onChange={(e) => setProdForm({ ...prodForm, tagline: e.target.value })}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">Etiqueta de Colección</label>
+              <input
+                type="text"
+                placeholder="Ej: LÍNEA ORIGINAL / BOLIVIA 2026"
+                value={prodForm.line}
+                onChange={(e) => setProdForm({ ...prodForm, line: e.target.value })}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">Precio Total (ARS) *</label>
+              <input
+                type="number"
+                required
+                placeholder="35000"
+                value={prodForm.price}
+                onChange={(e) => setProdForm({ ...prodForm, price: e.target.value })}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">Seña (Dejá vacío si es el 50%)</label>
+              <input
+                type="number"
+                placeholder="17500"
+                value={prodForm.deposit}
+                onChange={(e) => setProdForm({ ...prodForm, deposit: e.target.value })}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">URL de la Imagen</label>
+              <input
+                type="text"
+                placeholder="/1785149020942.png o https://..."
+                value={prodForm.image}
+                onChange={(e) => setProdForm({ ...prodForm, image: e.target.value })}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">Talles Separados por Coma</label>
+              <input
+                type="text"
+                value={prodForm.sizes}
+                onChange={(e) => setProdForm({ ...prodForm, sizes: e.target.value })}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 bg-zinc-900 p-3 rounded-xl border border-zinc-800">
+            <input
+              type="checkbox"
+              id="is_green"
+              checked={prodForm.is_green}
+              onChange={(e) => setProdForm({ ...prodForm, is_green: e.target.checked })}
+              className="w-4 h-4 accent-emerald-500 rounded cursor-pointer"
+            />
+            <label htmlFor="is_green" className="text-zinc-300 font-bold cursor-pointer">
+              ¿Es un producto verde? (100% a beneficio de Operación Santa Cruz)
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Descripción del Producto</label>
+            <textarea
+              rows="3"
+              placeholder="Detalles del tejido, confección, etc..."
+              value={prodForm.description}
+              onChange={(e) => setProdForm({ ...prodForm, description: e.target.value })}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400 resize-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-wider"
+          >
+            {loading ? 'Cargando...' : 'Guardar Producto en la Tienda'}
+          </button>
+        </form>
+      )}
+
     </div>
-  )
-                  }
+  );
+}
+```eof
+
+Con esto tenés el control total: subís posts y cargás indumentaria directamente desde tu teléfono o la compu desde la misma app.
