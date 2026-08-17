@@ -29,14 +29,16 @@ import {
   ShieldCheck,
   Flag,
   Flame,
-  Sparkle
+  Sparkle,
+  Calendar,
+  ExternalLink
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
 import AuthModal from './componentes/AuthModal';
 
 export default function App() {
-  // Pestañas Principales Unificadas
+  // Pestañas Principales Unificadas (4 Módulos)
   // 'el-leon' | 'operacion-santa-cruz' | 'leon-store' | 'actualidad'
   const [activeTab, setActiveTab] = useState('el-leon');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -58,9 +60,9 @@ export default function App() {
     localidad: ''
   });
 
-  // CMS Sanity & Backend Supabase
-  const [noticiasCms, setNoticiasCms] = useState([]);
-  const [cargandoNoticias, setCargandoNoticias] = useState(true);
+  // CMS Sanity & Posts de Supabase
+  const [posts, setPosts] = useState([]);
+  const [cargandoPosts, setCargandoPosts] = useState(true);
 
   // Sesión y Autenticación
   const [session, setSession] = useState(null);
@@ -70,12 +72,9 @@ export default function App() {
   // Truco Secreto Admin (3 clics en el logo "EL LEÓN")
   const [logoClicks, setLogoClicks] = useState(0);
 
-  const whatsappNumber = "5493425236731"; // Placeholder del administrador
+  const whatsappNumber = "5493425236731";
   const instagramUrl = "https://instagram.com/joelbox_";
   const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb8f4EU3QxS1ckJsS31A";
-
-  const SANITY_PROJECT_ID = '837br3mo';
-  const SANITY_DATASET = 'production';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -94,22 +93,8 @@ export default function App() {
       setActiveTab('admin');
     }
 
-    // Cargar noticias / bitácora desde Sanity CMS
-    const query = encodeURIComponent('*[_type in ["noticia", "post"]] | order(_createdAt desc)');
-    const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}?query=${query}`;
-
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        if (data.result && data.result.length > 0) {
-          setNoticiasCms(data.result);
-        }
-        setCargandoNoticias(false);
-      })
-      .catch(err => {
-        console.log("Consulta Sanity fallback:", err);
-        setCargandoNoticias(false);
-      });
+    // Cargar publicaciones de Supabase (Actualidad & Vlogs del Panel Creador)
+    fetchPublicPosts();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -129,6 +114,23 @@ export default function App() {
     }
   };
 
+  const fetchPublicPosts = async () => {
+    try {
+      setCargandoPosts(true);
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPosts(data || []);
+    } catch (err) {
+      console.log("Error cargando contenidos públicos:", err.message);
+    } finally {
+      setCargandoPosts(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -143,6 +145,21 @@ export default function App() {
     } else {
       setTimeout(() => setLogoClicks(0), 3000);
     }
+  };
+
+  // Función auxiliar para formatear embebidos de YouTube de forma segura
+  const getEmbedYoutubeUrl = (url) => {
+    if (!url) return null;
+    if (url.includes('youtube.com/embed/')) return url;
+    
+    // Convertir youtu.be/xxxx o youtube.com/watch?v=xxxx a embed format
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+
+    if (match && match[2].length === 11) {
+      return `https://www.youtube.com/embed/${match[2]}`;
+    }
+    return null;
   };
 
   // PESTAÑAS PRINCIPALES (4 MÓDULOS ENFOCADOS EN MARCA Y VENTA)
@@ -218,6 +235,9 @@ export default function App() {
   const handleSelectTab = (id) => {
     setActiveTab(id);
     setMobileMenuOpen(false);
+    if (id === 'actualidad') {
+      fetchPublicPosts();
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -427,7 +447,7 @@ export default function App() {
               <ShieldCheck className="w-5 h-5 text-yellow-400 shrink-0" />
               <div>
                 <h4 className="text-xs font-black text-yellow-400 uppercase">Panel Creador Habilitado</h4>
-                <p className="text-[11px] text-zinc-400">Podés agregar o editar prendas y contenido de la marca.</p>
+                <p className="text-[11px] text-zinc-400">Podés agregar o editar prendas y publicaciones del proceso.</p>
               </div>
             </div>
             <button
@@ -1034,38 +1054,96 @@ export default function App() {
         )}
 
         {/* =========================================================================
-            4. PESTAÑA: ACTUALIDAD (BITÁCORA, PROCESO DE LA MARCA & COMUNICADOS)
+            4. PESTAÑA: ACTUALIDAD (FEED DINÁMICO DESDE SUPABASE, VIDEOS & COMUNICADOS)
            ========================================================================= */}
         {activeTab === 'actualidad' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             
             <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">DETRÁS DE ESCENA Y NOTICIAS</span>
+              <span className="text-xs font-bold tracking-widest text-yellow-400 uppercase">FEED OFICIAL DE EL LEÓN</span>
               <h2 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">ACTUALIDAD</h2>
-              <p className="text-xs text-zinc-400">El proceso de confección, muestras, lanzamientos y comunicados oficiales.</p>
+              <p className="text-xs text-zinc-400">Diario de combate, vlogs, proceso de la marca y comunicados en tiempo real.</p>
             </div>
 
-            <div className="space-y-4">
-              {cargandoNoticias ? (
-                <div className="text-center text-xs text-zinc-500 py-6 font-mono">Cargando bitácora desde Sanity...</div>
-              ) : noticiasCms.length > 0 ? (
-                noticiasCms.map((n, idx) => (
-                  <div key={n._id || idx} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
-                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 rounded uppercase">
-                      {n.categoria || 'BITÁCORA DE MARCA'}
-                    </span>
-                    <h3 className="text-xl font-black text-white uppercase">{n.titulo || n.title}</h3>
-                    <p className="text-xs text-zinc-300 leading-relaxed">{n.resumen || n.summary}</p>
-                  </div>
-                ))
+            {/* LISTA DINÁMICA DE PUBLICACIONES DE SUPABASE */}
+            <div className="space-y-6">
+              {cargandoPosts ? (
+                <div className="text-center text-xs text-zinc-500 py-12 font-mono">Cargando publicaciones...</div>
+              ) : posts.length > 0 ? (
+                posts.map((post) => {
+                  const embedUrl = getEmbedYoutubeUrl(post.video_url);
+                  const fecha = post.created_at ? new Date(post.created_at).toLocaleDateString('es-AR', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  }) : 'Reciente';
+
+                  return (
+                    <article key={post.id} className="bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl transition-all hover:border-zinc-700">
+                      
+                      {/* CABECERA DEL POST */}
+                      <div className="p-5 flex items-center justify-between border-b border-zinc-900">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-yellow-400 text-black font-black flex items-center justify-center text-sm border-2 border-black">
+                            EL
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-black uppercase text-white tracking-wide">Joel Diaz — El León</h3>
+                            <p className="text-[10px] text-zinc-500 uppercase font-mono">{fecha}</p>
+                          </div>
+                        </div>
+
+                        {post.category && (
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-400 border border-yellow-500/20 px-3 py-1 rounded-full">
+                            {post.category}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* REPRODUCTOR DE VIDEO O CONTENIDO MULTIMEDIA */}
+                      {embedUrl ? (
+                        <div className="relative aspect-video bg-zinc-900 border-b border-zinc-900 overflow-hidden">
+                          <iframe
+                            src={embedUrl}
+                            title={post.title}
+                            className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      ) : post.video_url ? (
+                        <div className="p-4 bg-zinc-900 border-b border-zinc-800">
+                          <a 
+                            href={post.video_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-2 text-xs font-bold text-yellow-400 hover:underline"
+                          >
+                            <PlayCircle className="w-4 h-4" /> Abrir contenido multimedia externo
+                          </a>
+                        </div>
+                      ) : null}
+
+                      {/* DETALLES Y TEXTO DEL POST */}
+                      <div className="p-6 space-y-3">
+                        <h2 className="text-xl font-black uppercase text-white tracking-tight">{post.title}</h2>
+                        {post.description && (
+                          <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
+                            {post.description}
+                          </p>
+                        )}
+                      </div>
+
+                    </article>
+                  );
+                })
               ) : (
-                <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-3">
-                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 rounded uppercase">
-                    PROCESO DE MARCA
-                  </span>
-                  <h3 className="text-xl font-black text-white uppercase">Apertura Oficial de la Preventa</h3>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
-                    Lanzamiento oficial de la indumentaria de la Operación Santa Cruz. Seguí por acá los avances de producción, telas y empaquetado.
+                /* FALLBACK SI AÚN NO HAY POSTS PUBLICADOS */
+                <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8 text-center space-y-3">
+                  <span className="text-3xl block">🥊</span>
+                  <h3 className="text-lg font-black text-white uppercase">Aún no hay publicaciones</h3>
+                  <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                    Abre el Panel Creador para publicar tus vlogs, noticias y novedades en vivo.
                   </p>
                 </div>
               )}
@@ -1074,7 +1152,7 @@ export default function App() {
           </div>
         )}
 
-        {/* PESTAÑA OCULTA ADMIN */}
+        {/* PESTAÑA OCULTA ADMIN (PANEL CREADOR) */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
             <Admin />
