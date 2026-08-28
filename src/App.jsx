@@ -1,4 +1,3 @@
-```react
 import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
@@ -97,7 +96,7 @@ export default function App() {
   const instagramUrl = "https://instagram.com/joelbox_";
   const youtubeUrl = "https://youtube.com/@joelbox_";
 
-  // PRODUCTOS CONFIGURADOS CON DATOS EXACTOS
+  // PRODUCTOS CONFIGURADOS CON DATOS EXACTOS DEL PROMPT MAESTRO
   const defaultProducts = [
     {
       id: 'original-01',
@@ -233,13 +232,14 @@ export default function App() {
     }
   };
 
+  // Convertidor de URL a Embed Youtube súper seguro para compilación en Vite/esbuild
   const getEmbedYoutubeUrl = (url) => {
     if (!url) return null;
-    if (url.includes('youtube.com/embed/')) return url;
+    if (url.indexOf("youtube.com/embed/") !== -1) return url;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     if (match && match[2] && match[2].length === 11) {
-      return `https://www.youtube.com/embed/${match[2]}`;
+      return "https://www.youtube.com/embed/" + match[2];
     }
     return null;
   };
@@ -282,26 +282,29 @@ export default function App() {
     const isGreenProd = selectedProduct.is_green || selectedProduct.isGreen;
     const coleccionLabel = isGreenProd ? "RUMBO A BOLIVIA 2026 (EDICIÓN ESPECIAL)" : "LÍNEA ORIGINAL";
 
-    const msg = `🦁 *NUEVA RESERVA PREVENTA — EL LEÓN*
+    const lines = [
+      "🦁 *NUEVA RESERVA PREVENTA — EL LEÓN*",
+      "",
+      "👤 *Cliente:* " + buyerForm.nombre + " " + buyerForm.apellido,
+      "🪪 *DNI:* " + buyerForm.dni,
+      "📱 *WhatsApp:* " + buyerForm.telefono,
+      "📍 *Zona/Entrega:* " + buyerForm.localidad,
+      "",
+      "📦 *Producto:* " + selectedProduct.name,
+      "📏 *Talle:* " + size,
+      "🔢 *Cantidad:* " + orderQuantity,
+      "",
+      "💰 *Precio Total:* " + formatCurrency(totalCalc),
+      "💳 *Seña requerida:* " + formatCurrency(depositCalc),
+      "💵 *Saldo contra entrega:* " + formatCurrency(balanceCalc),
+      "",
+      "🏷️ *Colección:* " + coleccionLabel,
+      "",
+      "¡Hola Joel! Te envío la reserva desde la app para que me pases el alias y transferir la seña."
+    ];
 
-👤 *Cliente:* ${buyerForm.nombre} ${buyerForm.apellido}
-🪪 *DNI:* ${buyerForm.dni}
-📱 *WhatsApp:* ${buyerForm.telefono}
-📍 *Zona/Entrega:* ${buyerForm.localidad}
-
-📦 *Producto:* ${selectedProduct.name}
-📏 *Talle:* ${size}
-🔢 *Cantidad:* ${orderQuantity}
-
-💰 *Precio Total:* ${formatCurrency(totalCalc)}
-💳 *Seña requerida:* ${formatCurrency(depositCalc)}
-💵 *Saldo contra entrega:* ${formatCurrency(balanceCalc)}
-
-🏷️ *Colección:* ${coleccionLabel}
-
-¡Hola Joel! Te envío la reserva desde la app para que me pases el alias y transferir la seña.`;
-
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+    const msg = lines.join("\n");
+    window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(msg), '_blank');
     setCheckoutStep('transferencia');
   };
 
@@ -552,7 +555,7 @@ export default function App() {
 
               <div className="bg-black/60 border border-zinc-800/80 p-6 rounded-2xl space-y-4 text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-2xl">
                 <p className="text-white font-bold text-sm sm:text-base italic">
-                  «No sé cómo va a salir. No sé hasta dónde puede llegar. Pero quiero intentarlo. Y si sale bien, con el apoyo de todos quizás podamos llegar a Bolivia.»
+                  {"«No sé cómo va a salir. No sé hasta dónde puede llegar. Pero quiero intentarlo. Y si sale bien, con el apoyo de todos quizás podamos llegar a Bolivia.»"}
                 </p>
                 <p>
                   El León es un proyecto en construcción. Detrás de la marca no hay un personaje perfecto ni una corporación: hay un chico común que entrena todos los días, que trabaja, da clases y decidió asumir una responsabilidad extraordinaria.
@@ -1023,8 +1026,8 @@ export default function App() {
 
                 <button
                   onClick={() => {
-                    const msg = `¡Hola Joel! Te adjunto el comprobante de pago de la seña para confirmar mi reserva.`;
-                    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+                    const msg = "¡Hola Joel! Te adjunto el comprobante de pago de la seña para confirmar mi reserva.";
+                    window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(msg), '_blank');
                   }}
                   className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-4 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"
                 >
@@ -1185,4 +1188,3 @@ export default function App() {
     </div>
   );
 }
-```
