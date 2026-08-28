@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { supabase } from './supabaseClient';
-import { PackagePlus, FileText, Check, AlertCircle } from 'lucide-react';
+import { PackagePlus, Video, Check, AlertCircle } from 'lucide-react';
 
 export default function Admin() {
-  const [tabAdmin, setTabAdmin] = useState('post'); // 'post' | 'producto'
+  const [tabAdmin, setTabAdmin] = useState('post');
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState(null);
 
-  // Formulario Post (Actualidad)
   const [postForm, setPostForm] = useState({
     title: '',
     category: 'Vlog / Diario Deportivo',
@@ -15,7 +14,6 @@ export default function Admin() {
     description: ''
   });
 
-  // Formulario Producto (León Store)
   const [prodForm, setProdForm] = useState({
     name: '',
     tagline: '',
@@ -29,26 +27,31 @@ export default function Admin() {
     sizes: 'S, M, L, XL, XXL'
   });
 
-  // Guardar Post
   const handleSavePost = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMensaje(null);
 
     try {
-      const { error } = await supabase.from('posts').insert([postForm]);
+      const { error } = await supabase.from('posts').insert([{
+        title: postForm.title,
+        category: postForm.category,
+        video_url: postForm.video_url,
+        description: postForm.description,
+        access_type: 'public'
+      }]);
+
       if (error) throw error;
 
-      setMensaje({ type: 'success', text: '¡Publicación subida a Actualidad con éxito!' });
+      setMensaje({ type: 'success', text: '¡Publicación subida con éxito!' });
       setPostForm({ title: '', category: 'Vlog / Diario Deportivo', video_url: '', description: '' });
     } catch (err) {
-      setMensaje({ type: 'error', text: `Error: ${err.message}` });
+      setMensaje({ type: 'error', text: 'Error al publicar: ' + err.message });
     } finally {
       setLoading(false);
     }
   };
 
-  // Guardar Producto
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -76,13 +79,13 @@ export default function Admin() {
 
       if (error) throw error;
 
-      setMensaje({ type: 'success', text: '¡Producto cargado en León Store con éxito!' });
+      setMensaje({ type: 'success', text: '¡Producto publicado con éxito!' });
       setProdForm({
         name: '', tagline: '', line: 'LÍNEA ORIGINAL', price: '', deposit: '',
         image: '', badge: 'PREVENTA', is_green: false, description: '', sizes: 'S, M, L, XL, XXL'
       });
     } catch (err) {
-      setMensaje({ type: 'error', text: `Error: ${err.message}` });
+      setMensaje({ type: 'error', text: 'Error al cargar producto: ' + err.message });
     } finally {
       setLoading(false);
     }
@@ -91,50 +94,65 @@ export default function Admin() {
   return (
     <div className="max-w-2xl mx-auto bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6">
       
-      {/* Botones de alternancia */}
-      <div className="flex gap-2 border-b border-zinc-800 pb-4">
+      <div className="text-center space-y-1">
+        <span className="text-[10px] font-black tracking-widest text-yellow-400 uppercase bg-yellow-400/10 border border-yellow-500/20 px-3 py-1 rounded-full">
+          GESTOR DE MARCA & CONTENIDOS
+        </span>
+        <h2 className="text-2xl font-black text-white uppercase tracking-tight">
+          🥊 PANEL DE CONTROL CREADOR
+        </h2>
+        <p className="text-xs text-zinc-400">
+          Publicá tus videos del proceso y cargá prendas directamente a la tienda.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 pt-2">
         <button
           type="button"
           onClick={() => { setTabAdmin('post'); setMensaje(null); }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${
-            tabAdmin === 'post' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400'
+          className={`flex items-center justify-center gap-2 p-3.5 rounded-2xl text-xs font-black uppercase transition-all border ${
+            tabAdmin === 'post' 
+              ? 'bg-yellow-400 text-black border-yellow-400 shadow-lg shadow-yellow-400/10' 
+              : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white'
           }`}
         >
-          <FileText className="w-4 h-4" />
-          Subir a Actualidad
+          <Video className="w-4 h-4" />
+          Publicar Video / Proceso
         </button>
 
         <button
           type="button"
           onClick={() => { setTabAdmin('producto'); setMensaje(null); }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${
-            tabAdmin === 'producto' ? 'bg-yellow-400 text-black' : 'bg-zinc-900 text-zinc-400'
+          className={`flex items-center justify-center gap-2 p-3.5 rounded-2xl text-xs font-black uppercase transition-all border ${
+            tabAdmin === 'producto' 
+              ? 'bg-yellow-400 text-black border-yellow-400 shadow-lg shadow-yellow-400/10' 
+              : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white'
           }`}
         >
           <PackagePlus className="w-4 h-4" />
-          Cargar Producto Store
+          Publicar Producto Store
         </button>
       </div>
 
-      {/* Alertas */}
       {mensaje && (
-        <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
-          mensaje.type === 'success' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-red-950 text-red-400 border border-red-500/30'
+        <div className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+          mensaje.type === 'success' 
+            ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' 
+            : 'bg-red-950 text-red-400 border border-red-500/30'
         }`}>
           {mensaje.type === 'success' ? <Check className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
           <span>{mensaje.text}</span>
         </div>
       )}
 
-      {/* FORMULARIO POSTS */}
       {tabAdmin === 'post' && (
-        <form onSubmit={handleSavePost} className="space-y-4 text-xs">
+        <form onSubmit={handleSavePost} className="space-y-4 text-xs pt-2">
           <div>
-            <label className="block text-zinc-400 font-bold uppercase mb-1">Título *</label>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Título de la Publicación *</label>
             <input
               type="text"
               required
-              placeholder="Ej: Desde Adentro #01 | Primer Festival"
+              placeholder="Ej: Desde Adentro #01"
               value={postForm.title}
               onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
               className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
@@ -149,16 +167,18 @@ export default function Admin() {
               className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
             >
               <option value="Vlog / Diario Deportivo">Vlog / Diario Deportivo</option>
+              <option value="Detrás de Escena Marca">Detrás de Escena Marca</option>
               <option value="Noticia / Comunicado">Noticia / Comunicado</option>
               <option value="Operación Santa Cruz">Operación Santa Cruz</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-zinc-400 font-bold uppercase mb-1">Link del Video (YouTube)</label>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Link del Video (YouTube) *</label>
             <input
               type="text"
-              placeholder="https://youtu.be/..."
+              required
+              placeholder="Ej: https://youtu.be/..."
               value={postForm.video_url}
               onChange={(e) => setPostForm({ ...postForm, video_url: e.target.value })}
               className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
@@ -166,10 +186,10 @@ export default function Admin() {
           </div>
 
           <div>
-            <label className="block text-zinc-400 font-bold uppercase mb-1">Descripción</label>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Descripción / Texto del Post</label>
             <textarea
               rows="4"
-              placeholder="Escribí el texto de la publicación..."
+              placeholder="Escribí qué pasa en el video..."
               value={postForm.description}
               onChange={(e) => setPostForm({ ...postForm, description: e.target.value })}
               className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400 resize-none"
@@ -179,16 +199,15 @@ export default function Admin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-wider"
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider transition-all"
           >
-            {loading ? 'Publicando...' : 'Publicar en Actualidad'}
+            {loading ? 'Publicando...' : 'Publicar en Pestaña Actualidad'}
           </button>
         </form>
       )}
 
-      {/* FORMULARIO PRODUCTOS */}
       {tabAdmin === 'producto' && (
-        <form onSubmit={handleSaveProduct} className="space-y-4 text-xs">
+        <form onSubmit={handleSaveProduct} className="space-y-4 text-xs pt-2">
           <div>
             <label className="block text-zinc-400 font-bold uppercase mb-1">Nombre del Producto *</label>
             <input
@@ -231,7 +250,7 @@ export default function Admin() {
               <input
                 type="number"
                 required
-                placeholder="35000"
+                placeholder="Ej: 35000"
                 value={prodForm.price}
                 onChange={(e) => setProdForm({ ...prodForm, price: e.target.value })}
                 className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
@@ -239,10 +258,10 @@ export default function Admin() {
             </div>
 
             <div>
-              <label className="block text-zinc-400 font-bold uppercase mb-1">Seña (Dejá vacío si es el 50%)</label>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">Seña (Monto o 50% automático)</label>
               <input
                 type="number"
-                placeholder="17500"
+                placeholder="Ej: 17500"
                 value={prodForm.deposit}
                 onChange={(e) => setProdForm({ ...prodForm, deposit: e.target.value })}
                 className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
@@ -252,10 +271,10 @@ export default function Admin() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-zinc-400 font-bold uppercase mb-1">URL de la Imagen</label>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">Ruta o URL de Imagen</label>
               <input
                 type="text"
-                placeholder="/1785149020942.png o https://..."
+                placeholder="Ej: /1785149020942.png o https://..."
                 value={prodForm.image}
                 onChange={(e) => setProdForm({ ...prodForm, image: e.target.value })}
                 className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
@@ -263,7 +282,7 @@ export default function Admin() {
             </div>
 
             <div>
-              <label className="block text-zinc-400 font-bold uppercase mb-1">Talles Separados por Coma</label>
+              <label className="block text-zinc-400 font-bold uppercase mb-1">Talles Disponibles</label>
               <input
                 type="text"
                 value={prodForm.sizes}
@@ -273,7 +292,7 @@ export default function Admin() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-zinc-900 p-3 rounded-xl border border-zinc-800">
+          <div className="flex items-center gap-3 bg-zinc-900 p-3.5 rounded-xl border border-zinc-800">
             <input
               type="checkbox"
               id="is_green"
@@ -287,10 +306,10 @@ export default function Admin() {
           </div>
 
           <div>
-            <label className="block text-zinc-400 font-bold uppercase mb-1">Descripción del Producto</label>
+            <label className="block text-zinc-400 font-bold uppercase mb-1">Descripción de la Prenda</label>
             <textarea
               rows="3"
-              placeholder="Detalles del tejido, confección, etc..."
+              placeholder="Detalles del corte, tejido, estampado..."
               value={prodForm.description}
               onChange={(e) => setProdForm({ ...prodForm, description: e.target.value })}
               className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400 resize-none"
@@ -300,9 +319,9 @@ export default function Admin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-3.5 rounded-xl text-xs uppercase tracking-wider"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider transition-all"
           >
-            {loading ? 'Cargando...' : 'Guardar Producto en la Tienda'}
+            {loading ? 'Cargando...' : 'Cargar Producto en León Store'}
           </button>
         </form>
       )}
@@ -310,6 +329,3 @@ export default function Admin() {
     </div>
   );
 }
-```eof
-
-Con esto tenés el control total: subís posts y cargás indumentaria directamente desde tu teléfono o la compu desde la misma app.
