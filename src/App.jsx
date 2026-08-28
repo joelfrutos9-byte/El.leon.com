@@ -238,7 +238,10 @@ export default function App() {
     if (url.includes('youtube.com/embed/')) return url;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
-    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+    if (match && match[2] && match[2].length === 11) {
+      return 'https://www.youtube.com/embed/' + match[2];
+    }
+    return null;
   };
 
   const formatCurrency = (val) => {
