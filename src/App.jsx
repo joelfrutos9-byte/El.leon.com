@@ -239,7 +239,7 @@ export default function App() {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     if (match && match[2] && match[2].length === 11) {
-      return 'https://www.youtube.com/embed/' + match[2];
+      return `https://www.youtube.com/embed/${match[2]}`;
     }
     return null;
   };
@@ -275,25 +275,31 @@ export default function App() {
       return;
     }
 
-    const size = selectedSize[selectedProduct.id];
+    const size = selectedSize[selectedProduct.id] || 'S';
     const totalCalc = selectedProduct.price * orderQuantity;
     const depositCalc = selectedProduct.deposit * orderQuantity;
     const balanceCalc = selectedProduct.balance * orderQuantity;
-    const coleccionLabel = selectedProduct.isGreen ? "RUMBO A BOLIVIA 2026 (EDICIÓN ESPECIAL)" : "LÍNEA ORIGINAL";
+    const isGreenProd = selectedProduct.is_green || selectedProduct.isGreen;
+    const coleccionLabel = isGreenProd ? "RUMBO A BOLIVIA 2026 (EDICIÓN ESPECIAL)" : "LÍNEA ORIGINAL";
 
-    const msg = `🦁 *NUEVA RESERVA PREVENTA — EL LEÓN*\n\n` +
-      `👤 *Cliente:* ${buyerForm.nombre} ${buyerForm.apellido}\n` +
-      `🪪 *DNI:* ${buyerForm.dni}\n` +
-      `📱 *WhatsApp:* ${buyerForm.telefono}\n` +
-      `📍 *Zona/Entrega:* ${buyerForm.localidad}\n\n` +
-      `📦 *Producto:* ${selectedProduct.name}\n` +
-      `📏 *Talle:* ${size}\n` +
-      `🔢 *Cantidad:* ${orderQuantity}\n\n` +
-      `💰 *Precio Total:* ${formatCurrency(totalCalc)}\n` +
-      `💳 *Seña requerida:* ${formatCurrency(depositCalc)}\n` +
-      `💵 *Saldo contra entrega:* ${formatCurrency(balanceCalc)}\n\n` +
-      `🏷️ *Colección:* ${coleccionLabel}\n\n` +
-      `¡Hola Joel! Te envío la reserva desde la app para que me pases el alias y transferir la seña.`;
+    const msg = `🦁 *NUEVA RESERVA PREVENTA — EL LEÓN*
+
+👤 *Cliente:* ${buyerForm.nombre} ${buyerForm.apellido}
+🪪 *DNI:* ${buyerForm.dni}
+📱 *WhatsApp:* ${buyerForm.telefono}
+📍 *Zona/Entrega:* ${buyerForm.localidad}
+
+📦 *Producto:* ${selectedProduct.name}
+📏 *Talle:* ${size}
+🔢 *Cantidad:* ${orderQuantity}
+
+💰 *Precio Total:* ${formatCurrency(totalCalc)}
+💳 *Seña requerida:* ${formatCurrency(depositCalc)}
+💵 *Saldo contra entrega:* ${formatCurrency(balanceCalc)}
+
+🏷️ *Colección:* ${coleccionLabel}
+
+¡Hola Joel! Te envío la reserva desde la app para que me pases el alias y transferir la seña.`;
 
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
     setCheckoutStep('transferencia');
