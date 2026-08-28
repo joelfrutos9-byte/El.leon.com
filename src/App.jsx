@@ -148,10 +148,13 @@ export default function App() {
     }
   ];
 
-  // Datos Misión Santa Cruz
-  const recaudado = 0;
-  const objetivo = 3000000;
-  const porcentaje = Math.min(Math.round((recaudado / objetivo) * 100), 100);
+  // Datos Misión Santa Cruz (Configurables y preparadas para actualizar)
+  const objetivoEconomico = 3000000;
+  const metaRemeras = 50;
+  const remerasVendidas = 0;
+  const metaBuzos = 25;
+  const buzosVendidos = 0;
+  const porcentajeMision = 18; // Ejemplo visual ajustable / o cálculo automático
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -232,7 +235,6 @@ export default function App() {
     }
   };
 
-  // Convertidor de URL a Embed Youtube súper seguro para compilación en Vite/esbuild
   const getEmbedYoutubeUrl = (url) => {
     if (!url) return null;
     if (url.indexOf("youtube.com/embed/") !== -1) return url;
@@ -315,7 +317,6 @@ export default function App() {
       ? allProducts.filter(p => !p.is_green && !p.isGreen) 
       : allProducts.filter(p => p.is_green || p.isGreen);
 
-  // MÓDULOS DE NAVEGACIÓN PRINCIPAL
   const navTabs = [
     { id: 'inicio', label: 'EL LEÓN', sub: 'Boxeo • Entrenamiento • Camino', icon: UserCheck },
     { id: 'mision', label: 'MISIÓN SANTA CRUZ', sub: 'Objetivo Bolivia 2026', icon: Flag, badge: 'DESAFÍO' },
@@ -331,7 +332,6 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           
-          {/* LOGO OFICIAL */}
           <div 
             className="flex items-center gap-2 cursor-pointer select-none" 
             onClick={handleLogoClick}
@@ -345,7 +345,6 @@ export default function App() {
             </span>
           </div>
 
-          {/* ACCIONES DE HEADER */}
           <div className="flex items-center gap-2">
             <a 
               href={instagramUrl}
@@ -388,7 +387,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* NAVEGADOR DE PESTAÑAS HORIZONTAL */}
         <div className="max-w-5xl mx-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {navTabs.map(item => {
             const IconComponent = item.icon;
@@ -418,7 +416,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* MENÚ MÓVIL PANTALLA COMPLETA */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-6 overflow-y-auto animate-fade-in">
           <div>
@@ -472,10 +469,8 @@ export default function App() {
         </div>
       )}
 
-      {/* CONTENIDO PRINCIPAL POR PESTAÑAS */}
       <main className="max-w-5xl mx-auto px-4 pt-6">
 
-        {/* BANNER MODO ADMIN */}
         {session && userRole === 'profesor' && activeTab !== 'admin' && (
           <div className="mb-6 bg-[#FFD400]/10 border border-[#FFD400]/30 p-4 rounded-2xl flex justify-between items-center gap-3">
             <div className="flex items-center gap-3">
@@ -494,13 +489,9 @@ export default function App() {
           </div>
         )}
 
-        {/* =========================================================================
-            1. PESTAÑA PRINCIPAL: INICIO / EL LEÓN
-           ========================================================================= */}
+        {/* 1. INICIO */}
         {activeTab === 'inicio' && (
           <div className="space-y-12 animate-fade-in">
-            
-            {/* HERO PRINCIPAL */}
             <section className="relative rounded-3xl overflow-hidden border border-zinc-800/90 bg-zinc-950 text-center p-6 sm:p-12">
               <div className="absolute inset-0 z-0">
                 <img src="/E-576.jpg" alt="Joel El León" className="w-full h-full object-cover object-center opacity-30 filter grayscale" />
@@ -534,13 +525,12 @@ export default function App() {
                     className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold border border-zinc-700/80 px-6 py-3.5 rounded-2xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2"
                   >
                     <ShoppingBag className="w-4 h-4 text-[#FFD400]" />
-                    <span>VER EL LEÓN STORE</span>
+                    <span>VER LEÓN STORE</span>
                   </button>
                 </div>
               </div>
             </section>
 
-            {/* SECCIÓN "ESTOY EMPEZANDO ALGO NUEVO" */}
             <section className="bg-zinc-950 border border-zinc-800/90 rounded-3xl p-6 sm:p-10 space-y-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD400]/5 rounded-full filter blur-2xl pointer-events-none"></div>
 
@@ -562,7 +552,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* LOGROS DEPORTIVOS REALES DE JOEL */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
                 <div className="bg-zinc-900/80 border border-zinc-800/80 p-4 rounded-2xl text-center space-y-1">
                   <span className="text-2xl font-black text-[#FFD400] block font-mono">+44</span>
@@ -582,143 +571,163 @@ export default function App() {
                 </div>
               </div>
             </section>
-
-            {/* SECCIÓN IDENTIDAD Y FILOSOFÍA */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-zinc-950 border border-zinc-800/90 p-6 rounded-3xl space-y-3">
-                <span className="text-xs font-black text-[#FFD400] uppercase tracking-widest block">🕷️ Detrás del Boxeador</span>
-                <h3 className="text-xl font-black text-white uppercase">UN CHICO NORMAL</h3>
-                <p className="text-xs text-zinc-300 leading-relaxed">
-                  "Si tuviera que compararme con un superhéroe, sería Spider-Man. Porque detrás del boxeador no hay un personaje inalcanzable: hay un chico común que decidió asumir una responsabilidad extraordinaria, sin dejar de ser humano."
-                </p>
-              </div>
-
-              <div className="bg-zinc-950 border border-zinc-800/90 p-6 rounded-3xl space-y-3">
-                <span className="text-xs font-black text-[#FFD400] uppercase tracking-widest block">🥊 Filosofía de Vida</span>
-                <h3 className="text-xl font-black text-white uppercase">DISCIPLINA & TRABAJO</h3>
-                <p className="text-xs text-zinc-300 leading-relaxed">
-                  "Para mí la disciplina es un estilo de vida. Un equipo de trabajo y una familia son la receta para cualquier campeón. Mi estilo no viene del sufrimiento artificial: viene de divertirme haciendo lo que hago."
-                </p>
-              </div>
-            </section>
-
-            {/* MANIFESTACIÓN FINAL */}
-            <div className="bg-[#FFD400] text-black p-8 rounded-3xl text-center space-y-2 shadow-2xl">
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900 block">EL PROPÓSITO DE LA MARCA</span>
-              <p className="text-lg sm:text-2xl font-black uppercase tracking-tight">
-                "El León existe para que otros puedan sentirse parte de este camino."
-              </p>
-            </div>
-
           </div>
         )}
 
         {/* =========================================================================
-            2. PESTAÑA: MISIÓN ESPECIAL SANTA CRUZ 2026
+            2. PESTAÑA: MISIÓN ESPECIAL — SANTA CRUZ 2026 (ESTÉTICA MILITAR / CAMUFLADA / EXPEDICIÓN)
            ========================================================================= */}
         {activeTab === 'mision' && (
           <div className="space-y-8 animate-fade-in">
             
+            {/* Título de la Misión con Estética Expedición */}
             <div className="text-center space-y-2">
-              <span className="text-xs font-bold tracking-widest text-emerald-400 uppercase bg-emerald-950 border border-emerald-500/30 px-3.5 py-1 rounded-full">
-                MISIÓN ESPECIAL // EXPEDICIÓN DEPORTIVA
+              <span className="text-xs font-mono font-black tracking-widest text-[#FFD400] uppercase bg-[#3f3a18] border border-[#FFD400]/40 px-4 py-1 rounded-full shadow-md">
+                ⚡ MISIÓN ESPECIAL // EXPEDICIÓN TÁCTICA ⚡
               </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight">
-                SANTA CRUZ 2026
+              <h2 className="text-3xl sm:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-md">
+                SANTA CRUZ <span className="text-[#FFD400]">2026</span>
               </h2>
-              <p className="text-xs text-[#FFD400] font-bold uppercase tracking-widest">
-                OBJETIVO EN CONSTRUCCIÓN
+              <p className="text-xs text-emerald-400 font-mono font-bold tracking-widest uppercase">
+                [OBJETIVO EN CONSTRUCCIÓN // OPERACIÓN EN CURSO]
               </p>
             </div>
 
-            {/* TABLERO EXPEDICIÓN */}
-            <div className="bg-zinc-950 border border-emerald-500/30 p-6 sm:p-8 rounded-3xl space-y-6 relative overflow-hidden">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-800 pb-4">
-                <div>
-                  <span className="text-[10px] font-mono text-emerald-400 uppercase block">COD: EXP-BOLIVIA-2026</span>
-                  <h3 className="text-xl font-black text-white uppercase">DOCUMENTO DE OBJETIVO</h3>
+            {/* TABLERO PRINCIPAL CON ESTÉTICA MILITAR / MANCHAS DE CAMUFLAJE */}
+            <div className="relative rounded-3xl overflow-hidden border-2 border-emerald-900/80 bg-[#121611] text-zinc-100 shadow-2xl p-6 sm:p-10">
+              
+              {/* Manchas de camuflaje de fondo simuladas con gradientes oscuros/verdes oliva */}
+              <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-900/20 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#2a301e]/40 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-black/60 rounded-full blur-2xl pointer-events-none"></div>
+
+              <div className="relative z-10 space-y-8">
+                
+                {/* Cabecera del Tablero */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-emerald-900/50 pb-6">
+                  <div>
+                    <span className="text-[10px] font-mono text-emerald-400 tracking-widest uppercase bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-1 rounded">
+                      REGISTRO DE CAMPAÑA OFICIAL
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mt-2">
+                      OBJETIVO ECONÓMICO GLOBAL
+                    </h3>
+                  </div>
+
+                  <div className="bg-black/80 border-2 border-[#FFD400]/40 px-6 py-4 rounded-2xl text-right shadow-inner">
+                    <span className="text-[10px] text-zinc-400 uppercase font-mono block">META ECONÓMICA DE REFERENCIA</span>
+                    <span className="text-3xl sm:text-4xl font-mono font-black text-[#FFD400] tracking-tighter">
+                      ${objetivoEconomico.toLocaleString('es-AR')}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="sm:text-right">
-                  <span className="text-[10px] text-zinc-500 uppercase font-mono block">Meta de Financiación</span>
-                  <span className="text-2xl sm:text-3xl font-mono font-bold text-[#FFD400]">
-                    ${recaudado.toLocaleString('es-AR')} <span className="text-xs text-zinc-500">/ ${objetivo.toLocaleString('es-AR')}</span>
-                  </span>
+                {/* Manifiesto Narrativo */}
+                <div className="bg-black/70 border border-emerald-800/40 p-6 rounded-2xl space-y-3 text-xs sm:text-sm text-zinc-300 leading-relaxed font-medium">
+                  <p className="text-white font-bold text-sm sm:text-base uppercase tracking-wide">
+                    «¿Podemos conseguirlo entre todos? La misión se financia con productos de El León.»
+                  </p>
+                  <p className="text-zinc-400">
+                    No pedimos caridad ni donaciones. Estás comprando indumentaria de alta calidad con valor propio, y al mismo tiempo, formás parte directa de la expedición hacia Bolivia.
+                  </p>
                 </div>
-              </div>
 
-              <div className="bg-black/80 border border-zinc-800 p-5 rounded-2xl space-y-2 text-xs sm:text-sm text-zinc-300">
-                <p className="font-bold text-white uppercase tracking-wide">
-                  «Estoy intentando llegar a Santa Cruz para competir en el Verde y Oro. Todavía no sé si lo voy a conseguir. Esta misión recién empieza.»
-                </p>
-                <p className="text-zinc-400 text-xs">
-                  Acompañar este objetivo se puede hacer a través de la indumentaria de la edición especial o siguiendo cada actualización del viaje.
-                </p>
-              </div>
+                {/* SISTEMA DE PROGRESO DE UNIDADES */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-mono font-black text-[#FFD400] uppercase tracking-widest flex items-center gap-2">
+                    <Target className="w-4 h-4 text-[#FFD400]" />
+                    PROGRESO DE UNIDADES VENDIDAS
+                  </h4>
 
-              {/* Barra de Progreso */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[11px] font-mono text-zinc-400">
-                  <span>ESTADO DEL PROGRESO</span>
-                  <span>{porcentaje}% COMPLETADO</span>
-                </div>
-                <div className="w-full bg-zinc-900 h-4 rounded-full overflow-hidden p-0.5 border border-zinc-800">
-                  <div 
-                    className="bg-gradient-to-r from-emerald-500 to-[#FFD400] h-full rounded-full transition-all duration-700"
-                    style={{ width: `${porcentaje}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Productos de la Misión */}
-              <div className="pt-4 space-y-4">
-                <h4 className="text-sm font-black text-white uppercase flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-emerald-400" />
-                  PRENDAS VINCULADAS A LA EDICIÓN ESPECIAL
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {allProducts.filter(p => p.is_green || p.isGreen).map((p) => (
-                    <div key={p.id} className="bg-zinc-900/90 border border-emerald-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-3">
-                      <div className="space-y-2">
-                        <div className="relative aspect-square bg-zinc-950 rounded-xl overflow-hidden">
-                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                          <span className="absolute top-2 left-2 bg-emerald-950 text-emerald-400 border border-emerald-500/40 text-[9px] font-black px-2 py-0.5 rounded">
-                            EDICIÓN ESPECIAL
-                          </span>
-                        </div>
-                        <h5 className="text-sm font-black text-white uppercase">{p.name}</h5>
-                        <p className="text-xs text-zinc-400">{p.tagline}</p>
-                        <div className="flex justify-between text-xs font-bold pt-1">
-                          <span className="text-white">{formatCurrency(p.price)}</span>
-                          <span className="text-emerald-400">Seña: {formatCurrency(p.deposit)}</span>
-                        </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Remeras */}
+                    <div className="bg-black/60 border border-emerald-900/60 p-5 rounded-2xl flex justify-between items-center">
+                      <div>
+                        <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest block">LÍNEA REMERAS</span>
+                        <span className="text-xl font-black text-white uppercase mt-0.5 block">EDICIÓN BOLIVIA</span>
                       </div>
-
-                      <button
-                        onClick={() => {
-                          handleSelectTab('store');
-                          handleStartReservation(p);
-                        }}
-                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-2.5 rounded-xl text-xs uppercase tracking-wider"
-                      >
-                        RESERVAR EDICIÓN ESPECIAL
-                      </button>
+                      <div className="text-right font-mono">
+                        <span className="text-2xl font-black text-[#FFD400]">{remerasVendidas}</span>
+                        <span className="text-zinc-500 text-xs"> / {metaRemeras} META</span>
+                      </div>
                     </div>
-                  ))}
+
+                    {/* Buzos */}
+                    <div className="bg-black/60 border border-emerald-900/60 p-5 rounded-2xl flex justify-between items-center">
+                      <div>
+                        <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest block">LÍNEA HOODIES / BUZOS</span>
+                        <span className="text-xl font-black text-white uppercase mt-0.5 block">EDICIÓN ESPECIAL</span>
+                      </div>
+                      <div className="text-right font-mono">
+                        <span className="text-2xl font-black text-[#FFD400]">{buzosVendidos}</span>
+                        <span className="text-zinc-500 text-xs"> / {metaBuzos} META</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Indicador General */}
+                  <div className="bg-black/80 border border-emerald-500/30 p-5 rounded-2xl space-y-2">
+                    <div className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-zinc-300 font-bold uppercase">ESTADO DE LA MISIÓN</span>
+                      <span className="text-emerald-400 font-black text-sm">{porcentajeMision}% COMPLETADA</span>
+                    </div>
+                    <div className="w-full bg-zinc-900 h-4 rounded-full overflow-hidden p-0.5 border border-emerald-900">
+                      <div 
+                        className="bg-gradient-to-r from-emerald-600 via-[#FFD400] to-emerald-400 h-full rounded-full transition-all duration-700 shadow-md"
+                        style={{ width: `${porcentajeMision}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                {/* Acceso directo a adquirir prendas de la misión */}
+                <div className="pt-2 space-y-4">
+                  <h4 className="text-sm font-black text-white uppercase flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-[#FFD400]" />
+                    PRENDAS TÁCTICAS DISPONIBLES EN PREVENTA
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {allProducts.filter(p => p.is_green || p.isGreen).map((p) => (
+                      <div key={p.id} className="bg-black/80 border border-emerald-800/50 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                        <div className="space-y-2">
+                          <div className="relative aspect-square bg-zinc-950 rounded-xl overflow-hidden border border-emerald-900">
+                            <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                            <span className="absolute top-2 left-2 bg-emerald-950 text-emerald-400 border border-emerald-500/40 text-[9px] font-black px-2 py-0.5 rounded uppercase">
+                              EDICIÓN BOLIVIA
+                            </span>
+                          </div>
+                          <h5 className="text-sm font-black text-white uppercase">{p.name}</h5>
+                          <p className="text-xs text-zinc-400">{p.tagline}</p>
+                          <div className="flex justify-between text-xs font-bold pt-1 font-mono">
+                            <span className="text-white">{formatCurrency(p.price)}</span>
+                            <span className="text-[#FFD400]">Seña: {formatCurrency(p.deposit)}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            handleSelectTab('store');
+                            handleStartReservation(p);
+                          }}
+                          className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all"
+                        >
+                          ADQUIRIR Y SUMAR A LA MISIÓN
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             </div>
 
           </div>
         )}
 
-        {/* =========================================================================
-            3. PESTAÑA: LEÓN STORE (TIENDA & PREVENTA BAJO PEDIDO)
-           ========================================================================= */}
+        {/* 3. STORE */}
         {activeTab === 'store' && (
           <div className="space-y-8 animate-fade-in">
-            
             <div className="text-center space-y-2">
               <span className="text-xs font-bold tracking-widest text-[#FFD400] uppercase bg-[#FFD400]/10 border border-[#FFD400]/20 px-3.5 py-1 rounded-full">
                 SISTEMA DE PREVENTA OFICIAL
@@ -729,7 +738,6 @@ export default function App() {
               </p>
             </div>
 
-            {/* FILTROS Y NAVEGACIÓN STORE */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-zinc-800 pb-4">
               <div className="flex gap-2">
                 <button
@@ -777,7 +785,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* CÓMO FUNCIONA */}
             {storeSubTab === 'como-funciona' && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-3xl space-y-4 animate-fade-in">
                 <h3 className="text-lg font-black text-white uppercase text-center">01 AL 08 — CÓMO FUNCIONA TU RESERVA</h3>
@@ -801,7 +808,6 @@ export default function App() {
               </div>
             )}
 
-            {/* ENTREGAS */}
             {storeSubTab === 'envios' && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-3xl space-y-4 animate-fade-in text-xs">
                 <h3 className="text-lg font-black text-white uppercase flex items-center gap-2">
@@ -825,7 +831,6 @@ export default function App() {
               </div>
             )}
 
-            {/* CATALOGO */}
             {checkoutStep === 'catalogo' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {filteredProducts.map((p) => (
@@ -881,14 +886,13 @@ export default function App() {
                       onClick={() => handleStartReservation(p)}
                       className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#FFD400]/10 transition-all"
                     >
-                      QUIERO MI REMERA
+                      QUIERO MI PRENDA
                     </button>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* FORMULARIO DE RESERVA */}
             {checkoutStep === 'formulario' && selectedProduct && (
               <div className="bg-zinc-950 border border-zinc-800/90 p-6 sm:p-8 rounded-3xl space-y-6 max-w-xl mx-auto animate-fade-in">
                 <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
@@ -966,7 +970,6 @@ export default function App() {
                     />
                   </div>
 
-                  {/* RESUMEN */}
                   <div className="bg-black p-5 rounded-2xl border border-[#FFD400]/30 space-y-2.5 mt-4">
                     <span className="text-[#FFD400] font-black uppercase tracking-wider block text-xs">RESUMEN DE TU PREVENTA</span>
                     <div className="flex justify-between text-zinc-300">
@@ -1001,7 +1004,6 @@ export default function App() {
               </div>
             )}
 
-            {/* PANTALLA POSTERIOR */}
             {checkoutStep === 'transferencia' && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6 max-w-lg mx-auto text-center animate-fade-in">
                 <span className="text-3xl block">🦁</span>
@@ -1039,12 +1041,9 @@ export default function App() {
           </div>
         )}
 
-        {/* =========================================================================
-            4. PESTAÑA: SEGUÍ EL CAMINO
-           ========================================================================= */}
+        {/* 4. CONTENIDO */}
         {activeTab === 'contenido' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
-            
             <div className="text-center space-y-2">
               <span className="text-xs font-bold tracking-widest text-[#FFD400] uppercase bg-[#FFD400]/10 border border-[#FFD400]/20 px-3.5 py-1 rounded-full">
                 UNIVERSO DE CONTENIDO
@@ -1055,7 +1054,6 @@ export default function App() {
               </p>
             </div>
 
-            {/* REDES */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <a
                 href={instagramUrl}
@@ -1094,7 +1092,6 @@ export default function App() {
               </a>
             </div>
 
-            {/* FEED */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-black text-white uppercase flex items-center gap-2">
                 <Video className="w-5 h-5 text-[#FFD400]" />
@@ -1164,7 +1161,6 @@ export default function App() {
           </div>
         )}
 
-        {/* PESTAÑA OCULTA ADMIN */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
             <Admin />
@@ -1173,13 +1169,11 @@ export default function App() {
 
       </main>
 
-      {/* FOOTER NATIVO */}
       <footer className="border-t border-zinc-900 py-8 px-4 text-center text-xs text-zinc-600 space-y-2 mt-16">
         <p className="font-bold text-zinc-400 uppercase tracking-widest">EL LEÓN — JOEL FRUTOS (@joelbox_)</p>
         <p className="text-[10px]">Santo Tomé / Santa Fe / Rosario, Argentina • 2026</p>
       </footer>
 
-      {/* MODAL AUTH */}
       <AuthModal 
         isOpen={isAuthOpen} 
         onClose={() => setIsAuthOpen(false)} 
