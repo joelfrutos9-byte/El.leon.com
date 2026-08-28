@@ -1,3 +1,4 @@
+```react
 import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
@@ -54,14 +55,14 @@ import Admin from './Admin';
 import AuthModal from './componentes/AuthModal';
 
 export default function App() {
-  // Navegación Principal (Mobile App Feeling)
+  // Navegación Principal
   // 'inicio' | 'mision' | 'store' | 'contenido'
   const [activeTab, setActiveTab] = useState('inicio');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Subsecciones y filtros para León Store
   const [storeFilter, setStoreFilter] = useState('todos'); // 'todos' | 'original' | 'bolivia'
-  const [storeSubTab, setStoreSubTab] = useState('catalogo'); // 'catalogo' | 'como-funciona' | 'envios' | 'manada'
+  const [storeSubTab, setStoreSubTab] = useState('catalogo'); // 'catalogo' | 'como-funciona' | 'envios'
 
   // Flujo de Reserva y Checkout de Preventa
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -69,7 +70,7 @@ export default function App() {
   const [orderQuantity, setOrderQuantity] = useState(1);
   const [checkoutStep, setCheckoutStep] = useState('catalogo'); // 'catalogo' | 'formulario' | 'transferencia'
 
-  // Formulario de Reserva (Requisitos mínimos exactos)
+  // Formulario de Reserva (Requisitos mínimos)
   const [buyerForm, setBuyerForm] = useState({
     nombre: '',
     apellido: '',
@@ -95,9 +96,8 @@ export default function App() {
   const whatsappNumber = "5493425236731"; 
   const instagramUrl = "https://instagram.com/joelbox_";
   const youtubeUrl = "https://youtube.com/@joelbox_";
-  const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb8f4EU3QxS1ckJsS31A";
 
-  // PRODUCTOS CONFIGURADOS CON DATOS EXACTOS DEL PROMPT
+  // PRODUCTOS CONFIGURADOS CON DATOS EXACTOS
   const defaultProducts = [
     {
       id: 'original-01',
@@ -149,7 +149,7 @@ export default function App() {
     }
   ];
 
-  // Datos Misión Santa Cruz (Editable)
+  // Datos Misión Santa Cruz
   const recaudado = 0;
   const objetivo = 3000000;
   const porcentaje = Math.min(Math.round((recaudado / objetivo) * 100), 100);
@@ -193,7 +193,6 @@ export default function App() {
   const fetchDatabaseData = async () => {
     setCargandoDb(true);
     try {
-      // Cargar posteos para "Seguí el Proceso"
       const { data: postsData } = await supabase
         .from('posts')
         .select('*')
@@ -203,7 +202,6 @@ export default function App() {
         setDbPosts(postsData);
       }
 
-      // Cargar productos dinámicos de Supabase si existen
       const { data: prodsData } = await supabase
         .from('products')
         .select('*')
@@ -289,7 +287,7 @@ export default function App() {
       `📏 *Talle:* ${size}\n` +
       `🔢 *Cantidad:* ${orderQuantity}\n\n` +
       `💰 *Precio Total:* ${formatCurrency(totalCalc)}\n` +
-      `💳 *Seña requerida (50% aprox):* ${formatCurrency(depositCalc)}\n` +
+      `💳 *Seña requerida:* ${formatCurrency(depositCalc)}\n` +
       `💵 *Saldo contra entrega:* ${formatCurrency(balanceCalc)}\n\n` +
       `🏷️ *Colección:* ${coleccionLabel}\n\n` +
       `¡Hola Joel! Te envío la reserva desde la app para que me pases el alias y transferir la seña.`;
@@ -317,7 +315,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-[#FFD400] selection:text-black pb-20 sm:pb-12">
       
-      {/* HEADER NATIVO / HEADER DE APP */}
+      {/* HEADER PRINCIPAL */}
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           
@@ -573,7 +571,7 @@ export default function App() {
               </div>
             </section>
 
-            {/* SECCIÓN IDENTIDAD Y FILOSOFÍA (SPIDER-MAN & MANIFIESTO) */}
+            {/* SECCIÓN IDENTIDAD Y FILOSOFÍA */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-zinc-950 border border-zinc-800/90 p-6 rounded-3xl space-y-3">
                 <span className="text-xs font-black text-[#FFD400] uppercase tracking-widest block">🕷️ Detrás del Boxeador</span>
@@ -590,7 +588,7 @@ export default function App() {
                   "Para mí la disciplina es un estilo de vida. Un equipo de trabajo y una familia son la receta para cualquier campeón. Mi estilo no viene del sufrimiento artificial: viene de divertirme haciendo lo que hago."
                 </p>
               </div>
-            </div>
+            </section>
 
             {/* MANIFESTACIÓN FINAL */}
             <div className="bg-[#FFD400] text-black p-8 rounded-3xl text-center space-y-2 shadow-2xl">
@@ -621,7 +619,7 @@ export default function App() {
               </p>
             </div>
 
-            {/* DOCUMENTO DE MISIÓN / TABLERO CON ESTÉTICA EXPEDICIÓN */}
+            {/* TABLERO EXPEDICIÓN */}
             <div className="bg-zinc-950 border border-emerald-500/30 p-6 sm:p-8 rounded-3xl space-y-6 relative overflow-hidden">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-800 pb-4">
                 <div>
@@ -637,7 +635,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Mensaje humano y no victorioso predeterminado */}
               <div className="bg-black/80 border border-zinc-800 p-5 rounded-2xl space-y-2 text-xs sm:text-sm text-zinc-300">
                 <p className="font-bold text-white uppercase tracking-wide">
                   «Estoy intentando llegar a Santa Cruz para competir en el Verde y Oro. Todavía no sé si lo voy a conseguir. Esta misión recién empieza.»
@@ -720,9 +717,8 @@ export default function App() {
               </p>
             </div>
 
-            {/* BARRA DE NAVEGACIÓN Y FILTROS DENTRO DE TIENDA */}
+            {/* FILTROS Y NAVEGACIÓN STORE */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-zinc-800 pb-4">
-              {/* Categorías / Colecciones */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setStoreFilter('todos')}
@@ -750,7 +746,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Solapas Informativas */}
               <div className="flex gap-2 text-xs">
                 {[
                   { id: 'catalogo', label: 'Catálogo' },
@@ -770,7 +765,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* GUÍA DE CONFIAZA: ¿CÓMO FUNCIONA LA PREVENTA? */}
+            {/* CÓMO FUNCIONA */}
             {storeSubTab === 'como-funciona' && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-3xl space-y-4 animate-fade-in">
                 <h3 className="text-lg font-black text-white uppercase text-center">01 AL 08 — CÓMO FUNCIONA TU RESERVA</h3>
@@ -794,7 +789,7 @@ export default function App() {
               </div>
             )}
 
-            {/* INFORMACIÓN DE ENTREGAS Y ENVÍOS */}
+            {/* ENTREGAS */}
             {storeSubTab === 'envios' && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 rounded-3xl space-y-4 animate-fade-in text-xs">
                 <h3 className="text-lg font-black text-white uppercase flex items-center gap-2">
@@ -818,7 +813,7 @@ export default function App() {
               </div>
             )}
 
-            {/* CATALOGO DE PRENDAS */}
+            {/* CATALOGO */}
             {checkoutStep === 'catalogo' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {filteredProducts.map((p) => (
@@ -839,7 +834,6 @@ export default function App() {
 
                       <p className="text-xs text-zinc-300 leading-relaxed">{p.description}</p>
 
-                      {/* SELECCIÓN DE TALLE */}
                       <div className="pt-1">
                         <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1.5">Elegir Talle:</label>
                         <div className="flex flex-wrap gap-1.5">
@@ -859,7 +853,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* DETALLE FINANCIERO */}
                       <div className="pt-3 border-t border-zinc-900 flex justify-between items-end text-xs">
                         <div>
                           <span className="text-zinc-500 block text-[10px] uppercase font-bold">Precio Total</span>
@@ -883,7 +876,7 @@ export default function App() {
               </div>
             )}
 
-            {/* FORMULARIO DE RESERVA COMPLETO */}
+            {/* FORMULARIO DE RESERVA */}
             {checkoutStep === 'formulario' && selectedProduct && (
               <div className="bg-zinc-950 border border-zinc-800/90 p-6 sm:p-8 rounded-3xl space-y-6 max-w-xl mx-auto animate-fade-in">
                 <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
@@ -961,7 +954,7 @@ export default function App() {
                     />
                   </div>
 
-                  {/* RESUMEN CALCULADO DE FORMA EXACTA */}
+                  {/* RESUMEN */}
                   <div className="bg-black p-5 rounded-2xl border border-[#FFD400]/30 space-y-2.5 mt-4">
                     <span className="text-[#FFD400] font-black uppercase tracking-wider block text-xs">RESUMEN DE TU PREVENTA</span>
                     <div className="flex justify-between text-zinc-300">
@@ -996,7 +989,7 @@ export default function App() {
               </div>
             )}
 
-            {/* PANTALLA POSTERIOR: TRANSFERENCIA DE SEÑA */}
+            {/* PANTALLA POSTERIOR */}
             {checkoutStep === 'transferencia' && (
               <div className="bg-zinc-950 border border-zinc-800 p-6 sm:p-8 rounded-3xl space-y-6 max-w-lg mx-auto text-center animate-fade-in">
                 <span className="text-3xl block">🦁</span>
@@ -1035,7 +1028,7 @@ export default function App() {
         )}
 
         {/* =========================================================================
-            4. PESTAÑA: SEGUÍ EL CAMINO (INSTAGRAM, YOUTUBE Y FEED)
+            4. PESTAÑA: SEGUÍ EL CAMINO
            ========================================================================= */}
         {activeTab === 'contenido' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
@@ -1050,7 +1043,7 @@ export default function App() {
               </p>
             </div>
 
-            {/* ENLACES A REDES SOCIALES OFICIALES */}
+            {/* REDES */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <a
                 href={instagramUrl}
@@ -1089,7 +1082,7 @@ export default function App() {
               </a>
             </div>
 
-            {/* FEED DINÁMICO DE NOVEDADES DESDE SUPABASE */}
+            {/* FEED */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-black text-white uppercase flex items-center gap-2">
                 <Video className="w-5 h-5 text-[#FFD400]" />
