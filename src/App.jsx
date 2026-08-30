@@ -138,7 +138,7 @@ export default function App() {
       if (prodsData?.length) setDbProducts(prodsData);
     } catch (err) {
       console.error("Carga Supabase diferida:", err.message);
-    } fontally {
+    } finally {
       setCargandoDb(false);
     }
   };
