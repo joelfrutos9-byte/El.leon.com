@@ -1,79 +1,85 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   ShoppingBag, 
-  Zap, 
   MessageCircle, 
-  Users, 
-  Award, 
   Instagram, 
-  Newspaper, 
   Tv, 
-  Trophy,
-  UserCheck,
-  History,
-  Play,
-  Video,
-  Menu,
-  X,
-  ChevronRight,
-  Dumbbell,
-  Layers,
-  Sparkles,
-  Lock,
-  PlayCircle,
-  FileText,
-  Send,
-  Target,
-  Activity,
-  Key,
-  CheckCircle2,
-  Search,
-  Timer,
-  User,
-  LogOut,
-  ShieldCheck,
-  Flag,
-  Flame,
-  Sparkle,
-  Compass,
-  Truck,
-  Info,
-  ExternalLink,
-  ChevronDown,
-  Check,
-  AlertCircle,
-  PackageCheck,
-  CreditCard,
-  ArrowRight,
-  MapPin,
-  Youtube,
-  RefreshCw,
-  Copy
+  Video, 
+  Menu, 
+  X, 
+  ChevronRight, 
+  ShieldCheck, 
+  Send, 
+  User, 
+  LogOut, 
+  Truck, 
+  ExternalLink, 
+  Check, 
+  Youtube, 
+  Copy 
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
 import AuthModal from './componentes/AuthModal';
 
+// --- HELPERS PURAS (Fuera del componente para evitar recreación en cada render) ---
+const formatCurrency = (val) => 
+  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
+
+const getEmbedYoutubeUrl = (url) => {
+  if (!url) return null;
+  if (url.includes("youtube.com/embed/")) return url;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2] && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+};
+
+// --- DATOS CONSTANTES ---
+const CONTACT_DATA = {
+  whatsappNumber: "5493425236731",
+  instagramUrl: "https://instagram.com/joelbox_",
+  youtubeUrl: "https://youtube.com/@joelbox_",
+  payment: {
+    alias: "joelbox.mp",
+    cbu: "0000003100096964147778",
+    titular: "Joel Lautaro Frutos",
+    cuit: "20-46132711-2",
+    dni: "46.132.711",
+    banco: "Mercado Pago"
+  }
+};
+
+const DEFAULT_PRODUCTS = [
+  {
+    id: 'original-01',
+    name: 'REMERA EL LEÓN — LÍNEA ORIGINAL',
+    tagline: 'LA PIEL PERMANENTE DE LA MARCA',
+    line: 'LÍNEA ORIGINAL',
+    colorName: 'NEGRO',
+    price: 34900,
+    deposit: 20000,
+    balance: 14900,
+    image: '/1785149020942.png',
+    badge: 'LÍNEA PERMANENTE',
+    badgeColor: 'bg-[#FFD400] text-black font-black border-[#FFD400]',
+    description: 'Corte oversize urbano cotidiano. Algodón pesado de alta resistencia. Representa la identidad viva de El León.',
+    sizes: ['S', 'M', 'L', 'XL', 'XXL']
+  }
+];
+
 export default function App() {
-  // Navegación Principal
-  // 'inicio' | 'mision' | 'store' | 'contenido'
+  // Navegación Principal: 'inicio' | 'store' | 'contenido' | 'admin'
   const [activeTab, setActiveTab] = useState('inicio');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Subsecciones y filtros para León Store
-  const [storeFilter, setStoreFilter] = useState('todos'); // 'todos' | 'original' | 'bolivia'
   const [storeSubTab, setStoreSubTab] = useState('catalogo'); // 'catalogo' | 'como-funciona' | 'envios'
 
-  // Flujo de Reserva y Checkout de Preventa
+  // Proceso de Checkout y Selección de Productos
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedSize, setSelectedSize] = useState({});
-  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [selectedSizes, setSelectedSizes] = useState({});
   const [checkoutStep, setCheckoutStep] = useState('catalogo'); // 'catalogo' | 'formulario' | 'transferencia'
-
-  // Estado de copiado al portapapeles
   const [copiedAlias, setCopiedAlias] = useState(false);
 
-  // Formulario de Reserva (Requisitos mínimos)
+  // Formulario del comprador
   const [buyerForm, setBuyerForm] = useState({
     nombre: '',
     apellido: '',
@@ -82,93 +88,18 @@ export default function App() {
     localidad: 'Santo Tomé / Santa Fe'
   });
 
-  // Base de datos (Supabase)
+  // Base de datos y Sesión
   const [dbProducts, setDbProducts] = useState([]);
   const [dbPosts, setDbPosts] = useState([]);
   const [cargandoDb, setCargandoDb] = useState(true);
-
-  // Sesión y Autenticación
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState('alumno');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  // Truco Secreto Admin (3 clics en el logo "EL LEÓN")
+  // Secreto Admin
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // Datos fijos de contacto, pago y redes
-  const whatsappNumber = "5493425236731"; 
-  const instagramUrl = "https://instagram.com/joelbox_";
-  const youtubeUrl = "https://youtube.com/@joelbox_";
-
-  const paymentDetails = {
-    alias: "joelbox.mp",
-    cbu: "0000003100096964147778",
-    titular: "Joel Lautaro Frutos",
-    cuit: "20-46132711-2",
-    dni: "46.132.711",
-    banco: "Mercado Pago"
-  };
-
-  // PRODUCTOS CONFIGURADOS CON DATOS EXACTOS
-  const defaultProducts = [
-    {
-      id: 'original-01',
-      name: 'REMERA EL LEÓN — LÍNEA ORIGINAL',
-      tagline: 'LA PIEL PERMANENTE DE LA MARCA',
-      line: 'LÍNEA ORIGINAL',
-      colorName: 'NEGRO',
-      isGreen: false,
-      price: 34900,
-      deposit: 20000,
-      balance: 14900,
-      image: '/1785149020942.png',
-      badge: 'LÍNEA PERMANENTE',
-      badgeColor: 'bg-[#FFD400] text-black font-black border-[#FFD400]',
-      description: 'Corte oversize urbano cotidiano. Algodón pesado de alta resistencia. Representa la identidad viva de El León.',
-      sizes: ['S', 'M', 'L', 'XL', 'XXL']
-    },
-    {
-      id: 'bolivia-remera',
-      name: 'REMERA RUMBO A BOLIVIA — EDICIÓN ESPECIAL',
-      tagline: 'EDICIÓN ESPECIAL OPERACIÓN SANTA CRUZ',
-      line: 'CAMPAÑA BOLIVIA 2026',
-      colorName: 'VERDE OLIVA',
-      isGreen: true,
-      price: 39900,
-      deposit: 20000,
-      balance: 19900,
-      image: '/1785148963897.png',
-      badge: 'EDICIÓN LIMITADA',
-      badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Edición especial vinculada a la Misión Santa Cruz 2026. Tejido técnico con estampa de expedición deportiva.',
-      sizes: ['S', 'M', 'L', 'XL', 'XXL']
-    },
-    {
-      id: 'bolivia-hoodie',
-      name: 'HOODIE RUMBO A BOLIVIA — EDICIÓN ESPECIAL',
-      tagline: 'BUZO OVERSIZE HEAVY COTTON (DOS STAMPS)',
-      line: 'CAMPAÑA BOLIVIA 2026',
-      colorName: 'VERDE OLIVA',
-      isGreen: true,
-      price: 69900,
-      deposit: 35000,
-      balance: 34900,
-      image: '/1785148947849.png',
-      badge: 'EDICIÓN LIMITADA',
-      badgeColor: 'bg-emerald-950 text-emerald-400 border-emerald-500/40',
-      description: 'Buzo pesado con capucha reforzada y estampado táctico en espalda. Edición limitada de apoyo a la misión.',
-      sizes: ['S', 'M', 'L', 'XL', 'XXL']
-    }
-  ];
-
-  // Datos Misión Santa Cruz
-  const objetivoEconomico = 3000000;
-  const metaRemeras = 50;
-  const remerasVendidas = 0;
-  const metaBuzos = 25;
-  const buzosVendidos = 0;
-  const porcentajeMision = 18;
-
+  // Carga inicial y listeners de autenticación
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -181,86 +112,54 @@ export default function App() {
       else setUserRole('alumno');
     });
 
-    const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get('admin') === 'true') {
+    if (new URLSearchParams(window.location.search).get('admin') === 'true') {
       setActiveTab('admin');
     }
 
     fetchDatabaseData();
-
     return () => subscription.unsubscribe();
   }, []);
 
   const fetchUserProfile = async (userId) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('rol')
-        .eq('id', userId)
-        .single();
-
-      if (!error && data && data.rol) setUserRole(data.rol);
+      const { data } = await supabase.from('profiles').select('rol').eq('id', userId).single();
+      if (data?.rol) setUserRole(data.rol);
     } catch (err) {
-      console.log('Perfil no encontrado:', err.message);
+      console.error('Perfil no encontrado:', err.message);
     }
   };
 
   const fetchDatabaseData = async () => {
     setCargandoDb(true);
     try {
-      const { data: postsData } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [{ data: postsData }, { data: prodsData }] = await Promise.all([
+        supabase.from('posts').select('*').order('created_at', { ascending: false }),
+        supabase.from('products').select('*').order('created_at', { ascending: false })
+      ]);
 
-      if (postsData && postsData.length > 0) {
-        setDbPosts(postsData);
-      }
-
-      const { data: prodsData } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (prodsData && prodsData.length > 0) {
-        setDbProducts(prodsData);
-      }
+      if (postsData?.length) setDbPosts(postsData);
+      if (prodsData?.length) setDbProducts(prodsData);
     } catch (err) {
-      console.log("Carga diferida Supabase:", err.message);
+      console.error("Carga Supabase diferida:", err.message);
     } finally {
       setCargandoDb(false);
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
-  };
+  }, []);
 
   const handleLogoClick = () => {
-    const newCount = logoClicks + 1;
-    setLogoClicks(newCount);
-
-    if (newCount >= 3) {
-      setActiveTab('admin');
-      setLogoClicks(0);
-    } else {
-      setTimeout(() => setLogoClicks(0), 3000);
-    }
-  };
-
-  const getEmbedYoutubeUrl = (url) => {
-    if (!url) return null;
-    if (url.indexOf("youtube.com/embed/") !== -1) return url;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2] && match[2].length === 11) {
-      return "https://www.youtube.com/embed/" + match[2];
-    }
-    return null;
-  };
-
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
+    setLogoClicks((prev) => {
+      const next = prev + 1;
+      if (next >= 3) {
+        setActiveTab('admin');
+        return 0;
+      }
+      return next;
+    });
+    setTimeout(() => setLogoClicks(0), 3000);
   };
 
   const handleSelectTab = (id) => {
@@ -270,12 +169,11 @@ export default function App() {
   };
 
   const handleSelectSize = (productId, size) => {
-    setSelectedSize(prev => ({ ...prev, [productId]: size }));
+    setSelectedSizes(prev => ({ ...prev, [productId]: size }));
   };
 
   const handleStartReservation = (product) => {
-    const size = selectedSize[product.id];
-    if (!size) {
+    if (!selectedSizes[product.id]) {
       alert('Por favor elegí un talle antes de continuar con la reserva.');
       return;
     }
@@ -284,65 +182,53 @@ export default function App() {
   };
 
   const handleCopyAlias = () => {
-    navigator.clipboard.writeText(paymentDetails.alias);
+    navigator.clipboard.writeText(CONTACT_DATA.payment.alias);
     setCopiedAlias(true);
     setTimeout(() => setCopiedAlias(false), 2500);
   };
 
   const handleSendReservationWhatsapp = (e) => {
     e.preventDefault();
-    if (!buyerForm.nombre || !buyerForm.apellido || !buyerForm.dni || !buyerForm.telefono) {
+    const { nombre, apellido, dni, telefono, localidad } = buyerForm;
+    if (!nombre || !apellido || !dni || !telefono) {
       alert('Por favor completá todos los datos obligatorios.');
       return;
     }
 
-    const size = selectedSize[selectedProduct.id] || 'S';
-    const totalCalc = selectedProduct.price * orderQuantity;
-    const depositCalc = selectedProduct.deposit * orderQuantity;
-    const balanceCalc = selectedProduct.balance * orderQuantity;
-    const isGreenProd = selectedProduct.is_green || selectedProduct.isGreen;
-    const coleccionLabel = isGreenProd ? "RUMBO A BOLIVIA 2026 (EDICIÓN ESPECIAL)" : "LÍNEA ORIGINAL";
-
+    const size = selectedSizes[selectedProduct.id] || 'S';
     const lines = [
       "🦁 *NUEVA RESERVA PREVENTA — EL LEÓN*",
       "",
-      "👤 *Cliente:* " + buyerForm.nombre + " " + buyerForm.apellido,
-      "🪪 *DNI:* " + buyerForm.dni,
-      "📱 *WhatsApp:* " + buyerForm.telefono,
-      "📍 *Zona/Entrega:* " + buyerForm.localidad,
+      `👤 *Cliente:* ${nombre} ${apellido}`,
+      `🪪 *DNI:* ${dni}`,
+      `📱 *WhatsApp:* ${telefono}`,
+      `📍 *Zona/Entrega:* ${localidad}`,
       "",
-      "📦 *Producto:* " + selectedProduct.name,
-      "📏 *Talle:* " + size,
-      "🔢 *Cantidad:* " + orderQuantity,
+      `📦 *Producto:* ${selectedProduct.name}`,
+      `📏 *Talle:* ${size}`,
+      `🔢 *Cantidad:* 1`,
       "",
-      "💰 *Precio Total:* " + formatCurrency(totalCalc),
-      "💳 *Seña requerida:* " + formatCurrency(depositCalc),
-      "💵 *Saldo contra entrega:* " + formatCurrency(balanceCalc),
+      `💰 *Precio Total:* ${formatCurrency(selectedProduct.price)}`,
+      `💳 *Seña requerida:* ${formatCurrency(selectedProduct.deposit)}`,
+      `💵 *Saldo contra entrega:* ${formatCurrency(selectedProduct.balance)}`,
       "",
-      "🏷️ *Colección:* " + coleccionLabel,
+      "🏷️ *Colección:* LÍNEA ORIGINAL",
       "",
       "¡Hola Joel! Te envío la reserva desde la app para que me confirmes la recepción de la seña."
     ];
 
-    const msg = lines.join("\n");
-    window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(msg), '_blank');
+    window.open(`https://wa.me/${CONTACT_DATA.whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`, '_blank');
     setCheckoutStep('transferencia');
   };
 
-  const allProducts = dbProducts.length > 0 ? dbProducts : defaultProducts;
-  const filteredProducts = storeFilter === 'todos' 
-    ? allProducts 
-    : storeFilter === 'original' 
-      ? allProducts.filter(p => !p.is_green && !p.isGreen) 
-      : allProducts.filter(p => p.is_green || p.isGreen);
+  const productsList = useMemo(() => dbProducts.length > 0 ? dbProducts : DEFAULT_PRODUCTS, [dbProducts]);
 
-  const navTabs = [
-    { id: 'inicio', label: 'EL LEÓN', sub: 'Boxeo • Entrenamiento • Camino', icon: UserCheck },
-    { id: 'mision', label: 'MISIÓN SANTA CRUZ', sub: 'Objetivo Bolivia 2026', icon: Flag, badge: 'DESAFÍO' },
+  const navTabs = useMemo(() => [
+    { id: 'inicio', label: 'EL LEÓN', sub: 'Boxeo • Entrenamiento • Camino', icon: User },
     { id: 'store', label: 'LEÓN STORE', sub: 'Indumentaria & Preventa', icon: ShoppingBag, badge: 'PREVENTA' },
     { id: 'contenido', label: 'SEGUÍ EL CAMINO', sub: 'Videos, Vlogs & Redes', icon: Tv },
     ...(userRole === 'profesor' ? [{ id: 'admin', label: 'PANEL CREADOR', sub: 'Gestión & Productos', icon: ShieldCheck, badge: 'ADMIN' }] : [])
-  ];
+  ], [userRole]);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-[#FFD400] selection:text-black pb-20 sm:pb-12">
@@ -366,7 +252,7 @@ export default function App() {
 
           <div className="flex items-center gap-2">
             <a 
-              href={instagramUrl}
+              href={CONTACT_DATA.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs font-bold bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/80 px-3 py-1.5 rounded-full transition-colors"
@@ -435,6 +321,7 @@ export default function App() {
         </div>
       </header>
 
+      {/* NAVEGACIÓN MÓVIL (DESPLEGABLE) */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-6 overflow-y-auto animate-fade-in">
           <div>
@@ -508,7 +395,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. INICIO */}
+        {/* 1. SECCIÓN INICIO */}
         {activeTab === 'inicio' && (
           <div className="space-y-12 animate-fade-in">
             <section className="relative rounded-3xl overflow-hidden border border-zinc-800/90 bg-zinc-950 text-center p-6 sm:p-12">
@@ -532,30 +419,30 @@ export default function App() {
 
                 <div className="pt-3 flex flex-wrap gap-3 justify-center">
                   <button 
-                    onClick={() => handleSelectTab('mision')}
+                    onClick={() => handleSelectTab('store')}
                     className="bg-[#FFD400] hover:bg-yellow-400 text-black font-black px-6 py-3.5 rounded-2xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FFD400]/10"
                   >
-                    <span>CONOCER EL PROYECTO</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ShoppingBag className="w-4 h-4 text-black" />
+                    <span>VER LEÓN STORE</span>
                   </button>
 
                   <button 
-                    onClick={() => handleSelectTab('store')}
+                    onClick={() => handleSelectTab('contenido')}
                     className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold border border-zinc-700/80 px-6 py-3.5 rounded-2xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2"
                   >
-                    <ShoppingBag className="w-4 h-4 text-[#FFD400]" />
-                    <span>VER LEÓN STORE</span>
+                    <Tv className="w-4 h-4 text-[#FFD400]" />
+                    <span>VER CONTENIDO</span>
                   </button>
                 </div>
               </div>
             </section>
 
             <section className="bg-zinc-950 border border-zinc-800/90 rounded-3xl p-6 sm:p-10 space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD400]/5 rounded-full filter blur-2xl pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD400]/5 rounded-full filter blur-2xl pointer-events-none" />
 
               <div className="space-y-2">
                 <span className="text-[10px] font-black tracking-widest text-[#FFD400] uppercase bg-[#FFD400]/10 border border-[#FFD400]/20 px-3 py-1 rounded-full">
-                  CAMPAÑA DE SEPTIEMBRE
+                  SOBRE EL PROYECTO
                 </span>
                 <h2 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight">
                   ESTOY EMPEZANDO ALGO NUEVO.
@@ -564,7 +451,7 @@ export default function App() {
 
               <div className="bg-black/60 border border-zinc-800/80 p-6 rounded-2xl space-y-4 text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-2xl">
                 <p className="text-white font-bold text-sm sm:text-base italic">
-                  {"«No sé cómo va a salir. No sé hasta dónde puede llegar. Pero quiero intentarlo. Y si sale bien, con el apoyo de todos quizás podamos llegar a Bolivia.»"}
+                  {"«No sé cómo va a salir. No sé hasta dónde puede llegar. Pero quiero intentarlo.»"}
                 </p>
                 <p>
                   El León es un proyecto en construcción. Detrás de la marca no hay un personaje perfecto ni una corporación: hay un chico común que entrena todos los días, que trabaja, da clases y decidió asumir una responsabilidad extraordinaria.
@@ -593,143 +480,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. PESTAÑA: MISIÓN ESPECIAL — SANTA CRUZ 2026 */}
-        {activeTab === 'mision' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-mono font-black tracking-widest text-[#FFD400] uppercase bg-[#3f3a18] border border-[#FFD400]/40 px-4 py-1 rounded-full shadow-md">
-                ⚡ MISIÓN ESPECIAL // EXPEDICIÓN TÁCTICA ⚡
-              </span>
-              <h2 className="text-3xl sm:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-md">
-                SANTA CRUZ <span className="text-[#FFD400]">2026</span>
-              </h2>
-              <p className="text-xs text-emerald-400 font-mono font-bold tracking-widest uppercase">
-                [OBJETIVO EN CONSTRUCCIÓN // OPERACIÓN EN CURSO]
-              </p>
-            </div>
-
-            <div className="relative rounded-3xl overflow-hidden border-2 border-emerald-900/80 bg-[#121611] text-zinc-100 shadow-2xl p-6 sm:p-10">
-              <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-900/20 rounded-full blur-3xl pointer-events-none"></div>
-              <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#2a301e]/40 rounded-full blur-3xl pointer-events-none"></div>
-              <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-black/60 rounded-full blur-2xl pointer-events-none"></div>
-
-              <div className="relative z-10 space-y-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-emerald-900/50 pb-6">
-                  <div>
-                    <span className="text-[10px] font-mono text-emerald-400 tracking-widest uppercase bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-1 rounded">
-                      REGISTRO DE CAMPAÑA OFICIAL
-                    </span>
-                    <h3 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mt-2">
-                      OBJETIVO ECONÓMICO GLOBAL
-                    </h3>
-                  </div>
-
-                  <div className="bg-black/80 border-2 border-[#FFD400]/40 px-6 py-4 rounded-2xl text-right shadow-inner">
-                    <span className="text-[10px] text-zinc-400 uppercase font-mono block">META ECONÓMICA DE REFERENCIA</span>
-                    <span className="text-3xl sm:text-4xl font-mono font-black text-[#FFD400] tracking-tighter">
-                      ${objetivoEconomico.toLocaleString('es-AR')}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-black/70 border border-emerald-800/40 p-6 rounded-2xl space-y-3 text-xs sm:text-sm text-zinc-300 leading-relaxed font-medium">
-                  <p className="text-white font-bold text-sm sm:text-base uppercase tracking-wide">
-                    «¿Podemos conseguirlo entre todos? La misión se financia con productos de El León.»
-                  </p>
-                  <p className="text-zinc-400">
-                    No pedimos caridad ni donaciones. Estás comprando indumentaria de alta calidad con valor propio, y al mismo tiempo, formás parte directa de la expedición hacia Bolivia.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-xs font-mono font-black text-[#FFD400] uppercase tracking-widest flex items-center gap-2">
-                    <Target className="w-4 h-4 text-[#FFD400]" />
-                    PROGRESO DE UNIDADES VENDIDAS
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-black/60 border border-emerald-900/60 p-5 rounded-2xl flex justify-between items-center">
-                      <div>
-                        <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest block">LÍNEA REMERAS</span>
-                        <span className="text-xl font-black text-white uppercase mt-0.5 block">EDICIÓN BOLIVIA</span>
-                      </div>
-                      <div className="text-right font-mono">
-                        <span className="text-2xl font-black text-[#FFD400]">{remerasVendidas}</span>
-                        <span className="text-zinc-500 text-xs"> / {metaRemeras} META</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-black/60 border border-emerald-900/60 p-5 rounded-2xl flex justify-between items-center">
-                      <div>
-                        <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest block">LÍNEA HOODIES / BUZOS</span>
-                        <span className="text-xl font-black text-white uppercase mt-0.5 block">EDICIÓN ESPECIAL</span>
-                      </div>
-                      <div className="text-right font-mono">
-                        <span className="text-2xl font-black text-[#FFD400]">{buzosVendidos}</span>
-                        <span className="text-zinc-500 text-xs"> / {metaBuzos} META</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-black/80 border border-emerald-500/30 p-5 rounded-2xl space-y-2">
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="text-zinc-300 font-bold uppercase">ESTADO DE LA MISIÓN</span>
-                      <span className="text-emerald-400 font-black text-sm">{porcentajeMision}% COMPLETADA</span>
-                    </div>
-                    <div className="w-full bg-zinc-900 h-4 rounded-full overflow-hidden p-0.5 border border-emerald-900">
-                      <div 
-                        className="bg-gradient-to-r from-emerald-600 via-[#FFD400] to-emerald-400 h-full rounded-full transition-all duration-700 shadow-md"
-                        style={{ width: `${porcentajeMision}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-2 space-y-4">
-                  <h4 className="text-sm font-black text-white uppercase flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-[#FFD400]" />
-                    PRENDAS TÁCTICAS DISPONIBLES EN PREVENTA
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {allProducts.filter(p => p.is_green || p.isGreen).map((p) => (
-                      <div key={p.id} className="bg-black/80 border border-emerald-800/50 rounded-2xl p-4 flex flex-col justify-between space-y-3">
-                        <div className="space-y-2">
-                          <div className="relative aspect-square bg-zinc-950 rounded-xl overflow-hidden border border-emerald-900">
-                            <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                            <span className="absolute top-2 left-2 bg-emerald-950 text-emerald-400 border border-emerald-500/40 text-[9px] font-black px-2 py-0.5 rounded uppercase">
-                              EDICIÓN BOLIVIA
-                            </span>
-                          </div>
-                          <h5 className="text-sm font-black text-white uppercase">{p.name}</h5>
-                          <p className="text-xs text-zinc-400">{p.tagline}</p>
-                          <div className="flex justify-between text-xs font-bold pt-1 font-mono">
-                            <span className="text-white">{formatCurrency(p.price)}</span>
-                            <span className="text-[#FFD400]">Seña: {formatCurrency(p.deposit)}</span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            handleSelectTab('store');
-                            handleStartReservation(p);
-                          }}
-                          className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg transition-all"
-                        >
-                          ADQUIRIR Y SUMAR A LA MISIÓN
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* 3. STORE */}
+        {/* 2. SECCIÓN LEÓN STORE */}
         {activeTab === 'store' && (
           <div className="space-y-8 animate-fade-in">
             <div className="text-center space-y-2">
@@ -743,33 +494,6 @@ export default function App() {
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-zinc-800 pb-4">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setStoreFilter('todos')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${
-                    storeFilter === 'todos' ? 'bg-[#FFD400] text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                  }`}
-                >
-                  Todos
-                </button>
-                <button
-                  onClick={() => setStoreFilter('original')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${
-                    storeFilter === 'original' ? 'bg-[#FFD400] text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                  }`}
-                >
-                  Línea Original (Negra)
-                </button>
-                <button
-                  onClick={() => setStoreFilter('bolivia')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${
-                    storeFilter === 'bolivia' ? 'bg-emerald-500 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
-                  }`}
-                >
-                  Edición Especial (Verde)
-                </button>
-              </div>
-
               <div className="flex gap-2 text-xs">
                 {[
                   { id: 'catalogo', label: 'Catálogo' },
@@ -780,7 +504,7 @@ export default function App() {
                     key={sub.id}
                     onClick={() => setStoreSubTab(sub.id)}
                     className={`px-3 py-1 rounded-lg font-bold uppercase transition-all ${
-                      storeSubTab === sub.id ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                      storeSubTab === sub.id ? 'bg-[#FFD400] text-black font-black' : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
                     {sub.label}
@@ -837,7 +561,7 @@ export default function App() {
 
             {checkoutStep === 'catalogo' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {filteredProducts.map((p) => (
+                {productsList.map((p) => (
                   <div key={p.id} className="bg-zinc-950 border border-zinc-800/90 rounded-3xl overflow-hidden p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all">
                     <div className="space-y-3">
                       <div className="relative aspect-square bg-zinc-900 rounded-2xl overflow-hidden">
@@ -863,7 +587,7 @@ export default function App() {
                               key={sz}
                               onClick={() => handleSelectSize(p.id, sz)}
                               className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
-                                selectedSize[p.id] === sz 
+                                selectedSizes[p.id] === sz 
                                   ? 'bg-[#FFD400] text-black border-[#FFD400] scale-105 font-black' 
                                   : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700'
                               }`}
@@ -938,7 +662,7 @@ export default function App() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-zinc-400 font-bold uppercase mb-1">Número de Documento (DNI) *</label>
+                      <label className="block text-zinc-400 font-bold uppercase mb-1">DNI *</label>
                       <input
                         type="text"
                         required
@@ -950,7 +674,7 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-zinc-400 font-bold uppercase mb-1">Teléfono / WhatsApp *</label>
+                      <label className="block text-zinc-400 font-bold uppercase mb-1">WhatsApp *</label>
                       <input
                         type="text"
                         required
@@ -963,7 +687,7 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-zinc-400 font-bold uppercase mb-1">Localidad / Zona de Entrega *</label>
+                    <label className="block text-zinc-400 font-bold uppercase mb-1">Zona de Entrega *</label>
                     <input
                       type="text"
                       required
@@ -981,20 +705,20 @@ export default function App() {
                       <span className="font-bold text-white">{selectedProduct.name}</span>
                     </div>
                     <div className="flex justify-between text-zinc-300">
-                      <span>Talle Seleccionado:</span>
-                      <span className="font-bold text-white">{selectedSize[selectedProduct.id]}</span>
+                      <span>Talle:</span>
+                      <span className="font-bold text-white">{selectedSizes[selectedProduct.id]}</span>
                     </div>
                     <div className="flex justify-between text-zinc-300">
-                      <span>Precio total:</span>
-                      <span className="font-bold text-white font-mono">{formatCurrency(selectedProduct.price * orderQuantity)}</span>
+                      <span>Precio Total:</span>
+                      <span className="font-bold text-white font-mono">{formatCurrency(selectedProduct.price)}</span>
                     </div>
                     <div className="flex justify-between text-[#FFD400] font-bold">
-                      <span>Seña a Transferir:</span>
-                      <span className="font-mono">{formatCurrency(selectedProduct.deposit * orderQuantity)}</span>
+                      <span>Seña Requerida:</span>
+                      <span className="font-mono">{formatCurrency(selectedProduct.deposit)}</span>
                     </div>
                     <div className="flex justify-between text-zinc-400">
                       <span>Saldo contra entrega:</span>
-                      <span className="font-mono">{formatCurrency(selectedProduct.balance * orderQuantity)}</span>
+                      <span className="font-mono">{formatCurrency(selectedProduct.balance)}</span>
                     </div>
                   </div>
 
@@ -1024,7 +748,7 @@ export default function App() {
                   <div className="flex justify-between items-center bg-black/60 p-3 rounded-xl border border-zinc-800">
                     <div>
                       <span className="text-zinc-500 block text-[10px] font-bold uppercase">Alias Mercado Pago</span>
-                      <span className="font-mono font-black text-[#FFD400] text-sm">{paymentDetails.alias}</span>
+                      <span className="font-mono font-black text-[#FFD400] text-sm">{CONTACT_DATA.payment.alias}</span>
                     </div>
                     <button 
                       onClick={handleCopyAlias}
@@ -1039,19 +763,19 @@ export default function App() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
                       <span className="text-zinc-500 block text-[10px] font-bold uppercase">CBU</span>
-                      <span className="font-mono text-white text-[11px] block select-all">{paymentDetails.cbu}</span>
+                      <span className="font-mono text-white text-[11px] block select-all">{CONTACT_DATA.payment.cbu}</span>
                     </div>
                     <div>
                       <span className="text-zinc-500 block text-[10px] font-bold uppercase">Titular</span>
-                      <span className="font-bold text-white text-[11px] block">{paymentDetails.titular}</span>
+                      <span className="font-bold text-white text-[11px] block">{CONTACT_DATA.payment.titular}</span>
                     </div>
                     <div>
                       <span className="text-zinc-500 block text-[10px] font-bold uppercase">CUIT</span>
-                      <span className="font-mono text-white text-[11px] block">{paymentDetails.cuit}</span>
+                      <span className="font-mono text-white text-[11px] block">{CONTACT_DATA.payment.cuit}</span>
                     </div>
                     <div>
                       <span className="text-zinc-500 block text-[10px] font-bold uppercase">DNI</span>
-                      <span className="font-mono text-white text-[11px] block">{paymentDetails.dni}</span>
+                      <span className="font-mono text-white text-[11px] block">{CONTACT_DATA.payment.dni}</span>
                     </div>
                   </div>
                 </div>
@@ -1061,7 +785,7 @@ export default function App() {
                 <button
                   onClick={() => {
                     const msg = "¡Hola Joel! Te adjunto el comprobante de pago de la seña para mi reserva.";
-                    window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(msg), '_blank');
+                    window.open(`https://wa.me/${CONTACT_DATA.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
                   }}
                   className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-4 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#FFD400]/10"
                 >
@@ -1073,7 +797,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. CONTENIDO */}
+        {/* 3. SECCIÓN CONTENIDO */}
         {activeTab === 'contenido' && (
           <div className="space-y-8 max-w-3xl mx-auto animate-fade-in">
             <div className="text-center space-y-2">
@@ -1088,7 +812,7 @@ export default function App() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <a
-                href={instagramUrl}
+                href={CONTACT_DATA.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-zinc-950 border border-zinc-800 p-5 rounded-3xl flex items-center justify-between hover:border-[#FFD400] transition-all group"
@@ -1106,7 +830,7 @@ export default function App() {
               </a>
 
               <a
-                href={youtubeUrl}
+                href={CONTACT_DATA.youtubeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-zinc-950 border border-zinc-800 p-5 rounded-3xl flex items-center justify-between hover:border-red-500 transition-all group"
@@ -1159,7 +883,7 @@ export default function App() {
                         )}
                       </div>
 
-                      {embedUrl ? (
+                      {embedUrl && (
                         <div className="relative aspect-video bg-zinc-900 border-b border-zinc-900 overflow-hidden">
                           <iframe
                             src={embedUrl}
@@ -1168,7 +892,7 @@ export default function App() {
                             allowFullScreen
                           />
                         </div>
-                      ) : null}
+                      )}
 
                       <div className="p-6 space-y-2">
                         <h3 className="text-lg font-black uppercase text-white">{post.title}</h3>
@@ -1193,6 +917,7 @@ export default function App() {
           </div>
         )}
 
+        {/* 4. SECCIÓN ADMIN */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
             <Admin />
