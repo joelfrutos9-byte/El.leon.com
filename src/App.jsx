@@ -47,7 +47,8 @@ import {
   ArrowRight,
   MapPin,
   Youtube,
-  RefreshCw
+  RefreshCw,
+  Copy
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
@@ -68,6 +69,9 @@ export default function App() {
   const [selectedSize, setSelectedSize] = useState({});
   const [orderQuantity, setOrderQuantity] = useState(1);
   const [checkoutStep, setCheckoutStep] = useState('catalogo'); // 'catalogo' | 'formulario' | 'transferencia'
+
+  // Estado de copiado al portapapeles
+  const [copiedAlias, setCopiedAlias] = useState(false);
 
   // Formulario de Reserva (Requisitos mínimos)
   const [buyerForm, setBuyerForm] = useState({
@@ -91,12 +95,21 @@ export default function App() {
   // Truco Secreto Admin (3 clics en el logo "EL LEÓN")
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // Datos fijos de contacto y redes
+  // Datos fijos de contacto, pago y redes
   const whatsappNumber = "5493425236731"; 
   const instagramUrl = "https://instagram.com/joelbox_";
   const youtubeUrl = "https://youtube.com/@joelbox_";
 
-  // PRODUCTOS CONFIGURADOS CON DATOS EXACTOS DEL PROMPT MAESTRO
+  const paymentDetails = {
+    alias: "joelbox.mp",
+    cbu: "0000003100096964147778",
+    titular: "Joel Lautaro Frutos",
+    cuit: "20-46132711-2",
+    dni: "46.132.711",
+    banco: "Mercado Pago"
+  };
+
+  // PRODUCTOS CONFIGURADOS CON DATOS EXACTOS
   const defaultProducts = [
     {
       id: 'original-01',
@@ -148,13 +161,13 @@ export default function App() {
     }
   ];
 
-  // Datos Misión Santa Cruz (Configurables y preparadas para actualizar)
+  // Datos Misión Santa Cruz
   const objetivoEconomico = 3000000;
   const metaRemeras = 50;
   const remerasVendidas = 0;
   const metaBuzos = 25;
   const buzosVendidos = 0;
-  const porcentajeMision = 18; // Ejemplo visual ajustable / o cálculo automático
+  const porcentajeMision = 18;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -270,6 +283,12 @@ export default function App() {
     setCheckoutStep('formulario');
   };
 
+  const handleCopyAlias = () => {
+    navigator.clipboard.writeText(paymentDetails.alias);
+    setCopiedAlias(true);
+    setTimeout(() => setCopiedAlias(false), 2500);
+  };
+
   const handleSendReservationWhatsapp = (e) => {
     e.preventDefault();
     if (!buyerForm.nombre || !buyerForm.apellido || !buyerForm.dni || !buyerForm.telefono) {
@@ -302,7 +321,7 @@ export default function App() {
       "",
       "🏷️ *Colección:* " + coleccionLabel,
       "",
-      "¡Hola Joel! Te envío la reserva desde la app para que me pases el alias y transferir la seña."
+      "¡Hola Joel! Te envío la reserva desde la app para que me confirmes la recepción de la seña."
     ];
 
     const msg = lines.join("\n");
@@ -574,13 +593,9 @@ export default function App() {
           </div>
         )}
 
-        {/* =========================================================================
-            2. PESTAÑA: MISIÓN ESPECIAL — SANTA CRUZ 2026 (ESTÉTICA MILITAR / CAMUFLADA / EXPEDICIÓN)
-           ========================================================================= */}
+        {/* 2. PESTAÑA: MISIÓN ESPECIAL — SANTA CRUZ 2026 */}
         {activeTab === 'mision' && (
           <div className="space-y-8 animate-fade-in">
-            
-            {/* Título de la Misión con Estética Expedición */}
             <div className="text-center space-y-2">
               <span className="text-xs font-mono font-black tracking-widest text-[#FFD400] uppercase bg-[#3f3a18] border border-[#FFD400]/40 px-4 py-1 rounded-full shadow-md">
                 ⚡ MISIÓN ESPECIAL // EXPEDICIÓN TÁCTICA ⚡
@@ -593,17 +608,12 @@ export default function App() {
               </p>
             </div>
 
-            {/* TABLERO PRINCIPAL CON ESTÉTICA MILITAR / MANCHAS DE CAMUFLAJE */}
             <div className="relative rounded-3xl overflow-hidden border-2 border-emerald-900/80 bg-[#121611] text-zinc-100 shadow-2xl p-6 sm:p-10">
-              
-              {/* Manchas de camuflaje de fondo simuladas con gradientes oscuros/verdes oliva */}
               <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-900/20 rounded-full blur-3xl pointer-events-none"></div>
               <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#2a301e]/40 rounded-full blur-3xl pointer-events-none"></div>
               <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-black/60 rounded-full blur-2xl pointer-events-none"></div>
 
               <div className="relative z-10 space-y-8">
-                
-                {/* Cabecera del Tablero */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-emerald-900/50 pb-6">
                   <div>
                     <span className="text-[10px] font-mono text-emerald-400 tracking-widest uppercase bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-1 rounded">
@@ -622,7 +632,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Manifiesto Narrativo */}
                 <div className="bg-black/70 border border-emerald-800/40 p-6 rounded-2xl space-y-3 text-xs sm:text-sm text-zinc-300 leading-relaxed font-medium">
                   <p className="text-white font-bold text-sm sm:text-base uppercase tracking-wide">
                     «¿Podemos conseguirlo entre todos? La misión se financia con productos de El León.»
@@ -632,7 +641,6 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* SISTEMA DE PROGRESO DE UNIDADES */}
                 <div className="space-y-4">
                   <h4 className="text-xs font-mono font-black text-[#FFD400] uppercase tracking-widest flex items-center gap-2">
                     <Target className="w-4 h-4 text-[#FFD400]" />
@@ -640,7 +648,6 @@ export default function App() {
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Remeras */}
                     <div className="bg-black/60 border border-emerald-900/60 p-5 rounded-2xl flex justify-between items-center">
                       <div>
                         <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest block">LÍNEA REMERAS</span>
@@ -652,7 +659,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Buzos */}
                     <div className="bg-black/60 border border-emerald-900/60 p-5 rounded-2xl flex justify-between items-center">
                       <div>
                         <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest block">LÍNEA HOODIES / BUZOS</span>
@@ -665,7 +671,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Indicador General */}
                   <div className="bg-black/80 border border-emerald-500/30 p-5 rounded-2xl space-y-2">
                     <div className="flex justify-between items-center text-xs font-mono">
                       <span className="text-zinc-300 font-bold uppercase">ESTADO DE LA MISIÓN</span>
@@ -680,7 +685,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Acceso directo a adquirir prendas de la misión */}
                 <div className="pt-2 space-y-4">
                   <h4 className="text-sm font-black text-white uppercase flex items-center gap-2">
                     <ShoppingBag className="w-4 h-4 text-[#FFD400]" />
@@ -794,8 +798,8 @@ export default function App() {
                     { n: '02', t: 'Elegís tu talle' },
                     { n: '03', t: 'Completás tus datos' },
                     { n: '04', t: 'Enviás por WhatsApp' },
-                    { n: '05', t: 'Joel te pasa el alias' },
-                    { n: '06', t: 'Pagás la seña' },
+                    { n: '05', t: 'Transferís la seña' },
+                    { n: '06', t: 'Enviás comprobante' },
                     { n: '07', t: 'Se manda a producir' },
                     { n: '08', t: 'Recibís y pagás el saldo' }
                   ].map(step => (
@@ -1009,29 +1013,57 @@ export default function App() {
                 <span className="text-3xl block">🦁</span>
                 <h3 className="text-2xl font-black text-white uppercase">RESERVA INICIADA</h3>
                 <p className="text-xs text-zinc-300">
-                  Le enviamos los datos a Joel por WhatsApp. Transferí la seña para enviar tu prenda a producción.
+                  Le enviamos los datos a Joel por WhatsApp. Transferí la seña para ingresar tu orden en el lote de producción.
                 </p>
 
-                <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl text-left space-y-3 text-xs">
-                  <span className="text-[#FFD400] font-black uppercase tracking-wider block">DATOS DE TRANSFERENCIA</span>
-                  <div>
-                    <span className="text-zinc-500 block">Alias:</span>
-                    <span className="font-mono font-bold text-white text-sm">[COMPLETAR ALIAS DE JOEL]</span>
+                <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl text-left space-y-3.5 text-xs">
+                  <span className="text-[#FFD400] font-black uppercase tracking-wider block border-b border-zinc-800 pb-2">
+                    DATOS OFICIALES PARA EL PAGO DE SEÑA
+                  </span>
+                  
+                  <div className="flex justify-between items-center bg-black/60 p-3 rounded-xl border border-zinc-800">
+                    <div>
+                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">Alias Mercado Pago</span>
+                      <span className="font-mono font-black text-[#FFD400] text-sm">{paymentDetails.alias}</span>
+                    </div>
+                    <button 
+                      onClick={handleCopyAlias}
+                      className="bg-zinc-800 hover:bg-zinc-700 text-white p-2 rounded-lg transition-all flex items-center gap-1 text-[10px] font-bold uppercase"
+                      title="Copiar Alias"
+                    >
+                      {copiedAlias ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedAlias ? '¡Copiado!' : 'Copiar'}</span>
+                    </button>
                   </div>
-                  <div>
-                    <span className="text-zinc-500 block">Titular:</span>
-                    <span className="font-bold text-white">[COMPLETAR TITULAR]</span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">CBU</span>
+                      <span className="font-mono text-white text-[11px] block select-all">{paymentDetails.cbu}</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">Titular</span>
+                      <span className="font-bold text-white text-[11px] block">{paymentDetails.titular}</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">CUIT</span>
+                      <span className="font-mono text-white text-[11px] block">{paymentDetails.cuit}</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">DNI</span>
+                      <span className="font-mono text-white text-[11px] block">{paymentDetails.dni}</span>
+                    </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-zinc-400">El saldo restante se abona contra entrega en mano o envío.</p>
+                <p className="text-xs text-zinc-400">El saldo restante se abona contra entrega en mano o envío por correo.</p>
 
                 <button
                   onClick={() => {
-                    const msg = "¡Hola Joel! Te adjunto el comprobante de pago de la seña para confirmar mi reserva.";
+                    const msg = "¡Hola Joel! Te adjunto el comprobante de pago de la seña para mi reserva.";
                     window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(msg), '_blank');
                   }}
-                  className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-4 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                  className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-4 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#FFD400]/10"
                 >
                   <Send className="w-4 h-4" /> ENVIAR COMPROBANTE DE SEÑA
                 </button>
