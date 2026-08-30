@@ -38,14 +38,11 @@ const getEmbedYoutubeUrl = (url) => {
 const CONTACT_DATA = {
   whatsappNumber: "5493425236731",
   instagramUrl: "https://instagram.com/joelbox_",
-  youtubeUrl: "https://youtube.com/@joelbox_",
+  youtubeUrl: "https://youtube.com/@joel.frutosok?si=wopuwS8XylpehGhn",
   payment: {
-    alias: "joelbox.mp",
-    cbu: "0000003100096964147778",
-    titular: "Joel Lautaro Frutos",
-    cuit: "20-46132711-2",
-    dni: "46.132.711",
-    banco: "Mercado Pago"
+    alias: "joelboxeador",
+    titular: "Joel Frutos",
+    banco: "Banco Galicia"
   }
 };
 
@@ -141,7 +138,7 @@ export default function App() {
       if (prodsData?.length) setDbProducts(prodsData);
     } catch (err) {
       console.error("Carga Supabase diferida:", err.message);
-    } finally {
+    } fontally {
       setCargandoDb(false);
     }
   };
@@ -747,7 +744,7 @@ export default function App() {
                   
                   <div className="flex justify-between items-center bg-black/60 p-3 rounded-xl border border-zinc-800">
                     <div>
-                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">Alias Mercado Pago</span>
+                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">Alias</span>
                       <span className="font-mono font-black text-[#FFD400] text-sm">{CONTACT_DATA.payment.alias}</span>
                     </div>
                     <button 
@@ -762,20 +759,12 @@ export default function App() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
-                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">CBU</span>
-                      <span className="font-mono text-white text-[11px] block select-all">{CONTACT_DATA.payment.cbu}</span>
-                    </div>
-                    <div>
                       <span className="text-zinc-500 block text-[10px] font-bold uppercase">Titular</span>
                       <span className="font-bold text-white text-[11px] block">{CONTACT_DATA.payment.titular}</span>
                     </div>
                     <div>
-                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">CUIT</span>
-                      <span className="font-mono text-white text-[11px] block">{CONTACT_DATA.payment.cuit}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">DNI</span>
-                      <span className="font-mono text-white text-[11px] block">{CONTACT_DATA.payment.dni}</span>
+                      <span className="text-zinc-500 block text-[10px] font-bold uppercase">Banco / Entidad</span>
+                      <span className="font-bold text-white text-[11px] block">{CONTACT_DATA.payment.banco}</span>
                     </div>
                   </div>
                 </div>
