@@ -24,6 +24,9 @@ import { supabase } from './supabaseClient';
 import Admin from './Admin';
 import AuthModal from './componentes/AuthModal';
 
+// Email único autorizado como administrador
+const ADMIN_EMAIL = "joelfrutosdiaz10@gmail.com";
+
 // --- HELPERS PURAS ---
 const formatCurrency = (val) => 
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
@@ -70,13 +73,13 @@ export default function App() {
   // Navegación Principal: 'inicio' | 'store' | 'contenido' | 'admin'
   const [activeTab, setActiveTab] = useState('inicio');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [storeSubTab, setStoreSubTab] = useState('catalogo'); // 'catalogo' | 'como-funciona' | 'envios'
+  const [storeSubTab, setStoreSubTab] = useState('catalogo');
 
   // Proceso de Checkout y Selección de Productos
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSizes, setSelectedSizes] = useState({});
   const [activeImageIndexes, setActiveImageIndexes] = useState({});
-  const [checkoutStep, setCheckoutStep] = useState('catalogo'); // 'catalogo' | 'formulario' | 'transferencia'
+  const [checkoutStep, setCheckoutStep] = useState('catalogo');
   const [copiedAlias, setCopiedAlias] = useState(false);
 
   // Formulario del comprador
@@ -100,16 +103,15 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchUserProfile(session.user.id);
+      if (session) fetchUserProfile(session);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        fetchUserProfile(session.user.id);
+        fetchUserProfile(session);
       } else {
         setUserRole('alumno');
-        // Si cierra sesión estando en el panel admin, redirigir a inicio
         setActiveTab((currentTab) => currentTab === 'admin' ? 'inicio' : currentTab);
       }
     });
@@ -118,18 +120,20 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (userId) => {
-    try {
-      const { data } = await supabase.from('profiles').select('rol').eq('id', userId).single();
-      if (data?.rol) {
-        setUserRole(data.rol);
-        // Si el usuario tenía ?admin=true en la URL y es profesor, activar pestaña admin
-        if (data.rol === 'profesor' && new URLSearchParams(window.location.search).get('admin') === 'true') {
-          setActiveTab('admin');
-        }
+  // Validación estricta por Email
+  const fetchUserProfile = async (currentSession) => {
+    const userEmail = currentSession?.user?.email?.toLowerCase();
+
+    // Verificación: Solo joelfrutosdiaz10@gmail.com obtiene rol de profesor
+    if (userEmail === ADMIN_EMAIL.toLowerCase()) {
+      setUserRole('profesor');
+      if (new URLSearchParams(window.location.search).get('admin') === 'true') {
+        setActiveTab('admin');
       }
-    } catch (err) {
-      console.error('Perfil no encontrado:', err.message);
+    } else {
+      // Cualquier otro correo queda como 'alumno'
+      setUserRole('alumno');
+      if (activeTab === 'admin') setActiveTab('inicio');
     }
   };
 
@@ -156,14 +160,12 @@ export default function App() {
   }, []);
 
   const handleLogoClick = () => {
-    // Al hacer clic en el logo, simplemente regresa a Inicio
     setActiveTab('inicio');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectTab = (id) => {
-    // Protección de navegación: Si intenta entrar a admin sin ser profesor, solicitar login
-    if (id === 'admin' && (userRole !== 'profesor' || !session)) {
+    if (id === 'admin' && (userRole !== 'profesor' || session?.user?.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
       setIsAuthOpen(true);
       return;
     }
@@ -196,7 +198,7 @@ export default function App() {
   };
 
   const handleDeleteProduct = async (productId, productName) => {
-    if (userRole !== 'profesor' || !session) {
+    if (userRole !== 'profesor' || session?.user?.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
       alert('No tenés permisos para realizar esta acción.');
       return;
     }
@@ -252,12 +254,14 @@ export default function App() {
 
   const productsList = useMemo(() => dbProducts.length > 0 ? dbProducts : DEFAULT_PRODUCTS, [dbProducts]);
 
+  const isAdminUser = session && userRole === 'profesor' && session.user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
   const navTabs = useMemo(() => [
     { id: 'inicio', label: 'EL LEÓN', sub: 'Boxeo • Entrenamiento • Camino', icon: User },
     { id: 'store', label: 'LEÓN STORE', sub: 'Indumentaria & Preventa', icon: ShoppingBag, badge: 'PREVENTA' },
     { id: 'contenido', label: 'SEGUÍ EL CAMINO', sub: 'Videos, Vlogs & Redes', icon: Tv },
-    ...(session && userRole === 'profesor' ? [{ id: 'admin', label: 'PANEL CREADOR', sub: 'Gestión & Productos', icon: ShieldCheck, badge: 'ADMIN' }] : [])
-  ], [session, userRole]);
+    ...(isAdminUser ? [{ id: 'admin', label: 'PANEL CREADOR', sub: 'Gestión & Productos', icon: ShieldCheck, badge: 'ADMIN' }] : [])
+  ], [isAdminUser]);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-[#FFD400] selection:text-black pb-20 sm:pb-12">
@@ -293,9 +297,9 @@ export default function App() {
             {session ? (
               <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
                 <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                  userRole === 'profesor' ? 'bg-[#FFD400] text-black' : 'bg-zinc-800 text-zinc-300'
+                  isAdminUser ? 'bg-[#FFD400] text-black' : 'bg-zinc-800 text-zinc-300'
                 }`}>
-                  {userRole === 'profesor' ? 'Admin' : 'Usuario'}
+                  {isAdminUser ? 'Admin' : 'Usuario'}
                 </span>
                 <button onClick={handleLogout} className="p-1 text-zinc-400 hover:text-white" title="Cerrar Sesión">
                   <LogOut className="w-3.5 h-3.5" />
@@ -350,7 +354,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* NAVEGACIÓN MÓVIL (DESPLEGABLE) */}
+      {/* NAVEGACIÓN MÓVIL */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-6 overflow-y-auto animate-fade-in">
           <div>
@@ -406,13 +410,13 @@ export default function App() {
 
       <main className="max-w-5xl mx-auto px-4 pt-6">
 
-        {session && userRole === 'profesor' && activeTab !== 'admin' && (
+        {isAdminUser && activeTab !== 'admin' && (
           <div className="mb-6 bg-[#FFD400]/10 border border-[#FFD400]/30 p-4 rounded-2xl flex justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-5 h-5 text-[#FFD400] shrink-0" />
               <div>
                 <h4 className="text-xs font-black text-[#FFD400] uppercase">Modo Creador Activado</h4>
-                <p className="text-[11px] text-zinc-400">Tenés acceso habilitado para publicar o borrar productos.</p>
+                <p className="text-[11px] text-zinc-400">Iniciaste sesión como joelfrutosdiaz10@gmail.com.</p>
               </div>
             </div>
             <button
@@ -591,7 +595,6 @@ export default function App() {
             {checkoutStep === 'catalogo' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {productsList.map((p) => {
-                  // Normalización de imágenes (soporta una sola o arreglo)
                   const imageList = Array.isArray(p.images) && p.images.length > 0 
                     ? p.images 
                     : Array.isArray(p.image) && p.image.length > 0 
@@ -604,8 +607,7 @@ export default function App() {
                   return (
                     <div key={p.id} className="bg-zinc-950 border border-zinc-800/90 rounded-3xl overflow-hidden p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all relative group">
                       
-                      {/* Botón de Borrar (Sólo visible para Profesor / Admin autenticado) */}
-                      {session && userRole === 'profesor' && (
+                      {isAdminUser && (
                         <button
                           onClick={() => handleDeleteProduct(p.id, p.name)}
                           className="absolute top-3 right-3 z-20 bg-red-600/90 hover:bg-red-500 text-white p-2 rounded-xl transition-all shadow-md backdrop-blur-sm"
@@ -623,7 +625,6 @@ export default function App() {
                           </span>
                         </div>
 
-                        {/* Galería de Miniaturas si hay 2 o más imágenes */}
                         {imageList.length > 1 && (
                           <div className="flex gap-2 justify-center pt-1">
                             {imageList.map((imgUrl, idx) => (
@@ -979,10 +980,10 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. SECCIÓN ADMIN (Protegida) */}
+        {/* 4. SECCIÓN ADMIN (Protegida por email) */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
-            {session && userRole === 'profesor' ? (
+            {isAdminUser ? (
               <Admin />
             ) : (
               <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8 sm:p-12 text-center max-w-md mx-auto space-y-5 my-8">
@@ -992,14 +993,14 @@ export default function App() {
                 <div className="space-y-2">
                   <h3 className="text-xl font-black text-white uppercase">ACCESO RESTRINGIDO</h3>
                   <p className="text-xs text-zinc-400">
-                    El Panel Creador es exclusivo para administradores. Iniciá sesión con tu cuenta para continuar.
+                    Únicamente el usuario autorizado ({ADMIN_EMAIL}) puede acceder al Panel Creador.
                   </p>
                 </div>
                 <button
                   onClick={() => setIsAuthOpen(true)}
                   className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider transition-all"
                 >
-                  INICIAR SESIÓN COMO ADMIN
+                  INICIAR SESIÓN CON MI CUENTA
                 </button>
               </div>
             )}
@@ -1020,4 +1021,4 @@ export default function App() {
 
     </div>
   );
-    }
+}
