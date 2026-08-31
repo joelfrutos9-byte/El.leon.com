@@ -16,13 +16,15 @@ import {
   ExternalLink, 
   Check, 
   Youtube, 
-  Copy 
+  Copy,
+  Trash2,
+  Lock
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Admin from './Admin';
 import AuthModal from './componentes/AuthModal';
 
-// --- HELPERS PURAS (Fuera del componente para evitar recreación en cada render) ---
+// --- HELPERS PURAS ---
 const formatCurrency = (val) => 
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
 
@@ -56,7 +58,7 @@ const DEFAULT_PRODUCTS = [
     price: 34900,
     deposit: 20000,
     balance: 14900,
-    image: '/1785149020942.png',
+    images: ['/1785149020942.png'],
     badge: 'LÍNEA PERMANENTE',
     badgeColor: 'bg-[#FFD400] text-black font-black border-[#FFD400]',
     description: 'Corte oversize urbano cotidiano. Algodón pesado de alta resistencia. Representa la identidad viva de El León.',
@@ -73,6 +75,7 @@ export default function App() {
   // Proceso de Checkout y Selección de Productos
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSizes, setSelectedSizes] = useState({});
+  const [activeImageIndexes, setActiveImageIndexes] = useState({});
   const [checkoutStep, setCheckoutStep] = useState('catalogo'); // 'catalogo' | 'formulario' | 'transferencia'
   const [copiedAlias, setCopiedAlias] = useState(false);
 
@@ -93,9 +96,6 @@ export default function App() {
   const [userRole, setUserRole] = useState('alumno');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  // Secreto Admin
-  const [logoClicks, setLogoClicks] = useState(0);
-
   // Carga inicial y listeners de autenticación
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -105,13 +105,14 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchUserProfile(session.user.id);
-      else setUserRole('alumno');
+      if (session) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setUserRole('alumno');
+        // Si cierra sesión estando en el panel admin, redirigir a inicio
+        setActiveTab((currentTab) => currentTab === 'admin' ? 'inicio' : currentTab);
+      }
     });
-
-    if (new URLSearchParams(window.location.search).get('admin') === 'true') {
-      setActiveTab('admin');
-    }
 
     fetchDatabaseData();
     return () => subscription.unsubscribe();
@@ -120,7 +121,13 @@ export default function App() {
   const fetchUserProfile = async (userId) => {
     try {
       const { data } = await supabase.from('profiles').select('rol').eq('id', userId).single();
-      if (data?.rol) setUserRole(data.rol);
+      if (data?.rol) {
+        setUserRole(data.rol);
+        // Si el usuario tenía ?admin=true en la URL y es profesor, activar pestaña admin
+        if (data.rol === 'profesor' && new URLSearchParams(window.location.search).get('admin') === 'true') {
+          setActiveTab('admin');
+        }
+      }
     } catch (err) {
       console.error('Perfil no encontrado:', err.message);
     }
@@ -145,21 +152,21 @@ export default function App() {
 
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
+    setActiveTab('inicio');
   }, []);
 
   const handleLogoClick = () => {
-    setLogoClicks((prev) => {
-      const next = prev + 1;
-      if (next >= 3) {
-        setActiveTab('admin');
-        return 0;
-      }
-      return next;
-    });
-    setTimeout(() => setLogoClicks(0), 3000);
+    // Al hacer clic en el logo, simplemente regresa a Inicio
+    setActiveTab('inicio');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectTab = (id) => {
+    // Protección de navegación: Si intenta entrar a admin sin ser profesor, solicitar login
+    if (id === 'admin' && (userRole !== 'profesor' || !session)) {
+      setIsAuthOpen(true);
+      return;
+    }
     setActiveTab(id);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -167,6 +174,10 @@ export default function App() {
 
   const handleSelectSize = (productId, size) => {
     setSelectedSizes(prev => ({ ...prev, [productId]: size }));
+  };
+
+  const handleSelectImageIndex = (productId, index) => {
+    setActiveImageIndexes(prev => ({ ...prev, [productId]: index }));
   };
 
   const handleStartReservation = (product) => {
@@ -182,6 +193,27 @@ export default function App() {
     navigator.clipboard.writeText(CONTACT_DATA.payment.alias);
     setCopiedAlias(true);
     setTimeout(() => setCopiedAlias(false), 2500);
+  };
+
+  const handleDeleteProduct = async (productId, productName) => {
+    if (userRole !== 'profesor' || !session) {
+      alert('No tenés permisos para realizar esta acción.');
+      return;
+    }
+
+    const confirmDelete = window.confirm(`¿Estás seguro de que querés eliminar "${productName}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', productId);
+      if (error) throw error;
+
+      setDbProducts(prev => prev.filter(p => p.id !== productId));
+      alert('Producto eliminado correctamente.');
+    } catch (err) {
+      console.error('Error al borrar el producto:', err.message);
+      alert('No se pudo eliminar el producto: ' + err.message);
+    }
   };
 
   const handleSendReservationWhatsapp = (e) => {
@@ -224,8 +256,8 @@ export default function App() {
     { id: 'inicio', label: 'EL LEÓN', sub: 'Boxeo • Entrenamiento • Camino', icon: User },
     { id: 'store', label: 'LEÓN STORE', sub: 'Indumentaria & Preventa', icon: ShoppingBag, badge: 'PREVENTA' },
     { id: 'contenido', label: 'SEGUÍ EL CAMINO', sub: 'Videos, Vlogs & Redes', icon: Tv },
-    ...(userRole === 'profesor' ? [{ id: 'admin', label: 'PANEL CREADOR', sub: 'Gestión & Productos', icon: ShieldCheck, badge: 'ADMIN' }] : [])
-  ], [userRole]);
+    ...(session && userRole === 'profesor' ? [{ id: 'admin', label: 'PANEL CREADOR', sub: 'Gestión & Productos', icon: ShieldCheck, badge: 'ADMIN' }] : [])
+  ], [session, userRole]);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-[#FFD400] selection:text-black pb-20 sm:pb-12">
@@ -237,7 +269,7 @@ export default function App() {
           <div 
             className="flex items-center gap-2 cursor-pointer select-none" 
             onClick={handleLogoClick}
-            title="El León Boxeo"
+            title="El León Boxeo - Inicio"
           >
             <span className="text-xl sm:text-2xl font-black tracking-tighter text-[#FFD400] uppercase font-mono">
               EL LEÓN
@@ -380,7 +412,7 @@ export default function App() {
               <ShieldCheck className="w-5 h-5 text-[#FFD400] shrink-0" />
               <div>
                 <h4 className="text-xs font-black text-[#FFD400] uppercase">Modo Creador Activado</h4>
-                <p className="text-[11px] text-zinc-400">Tenés acceso habilitado para publicar novedades o productos.</p>
+                <p className="text-[11px] text-zinc-400">Tenés acceso habilitado para publicar o borrar productos.</p>
               </div>
             </div>
             <button
@@ -558,63 +590,104 @@ export default function App() {
 
             {checkoutStep === 'catalogo' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {productsList.map((p) => (
-                  <div key={p.id} className="bg-zinc-950 border border-zinc-800/90 rounded-3xl overflow-hidden p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all">
-                    <div className="space-y-3">
-                      <div className="relative aspect-square bg-zinc-900 rounded-2xl overflow-hidden">
-                        <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                        <span className={`absolute top-3 left-3 text-[9px] font-black px-2.5 py-1 rounded-md border ${p.badgeColor}`}>
-                          {p.badge}
-                        </span>
-                      </div>
+                {productsList.map((p) => {
+                  // Normalización de imágenes (soporta una sola o arreglo)
+                  const imageList = Array.isArray(p.images) && p.images.length > 0 
+                    ? p.images 
+                    : Array.isArray(p.image) && p.image.length > 0 
+                      ? p.image 
+                      : [p.image || p.images || '/1785149020942.png'];
 
-                      <div>
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase block tracking-wider">{p.line}</span>
-                        <h3 className="text-base font-black text-white uppercase leading-tight mt-0.5">{p.name}</h3>
-                        <p className="text-xs text-zinc-400 italic mt-0.5">{p.tagline}</p>
-                      </div>
+                  const currentImgIdx = activeImageIndexes[p.id] || 0;
+                  const currentImg = imageList[currentImgIdx] || imageList[0];
 
-                      <p className="text-xs text-zinc-300 leading-relaxed">{p.description}</p>
+                  return (
+                    <div key={p.id} className="bg-zinc-950 border border-zinc-800/90 rounded-3xl overflow-hidden p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all relative group">
+                      
+                      {/* Botón de Borrar (Sólo visible para Profesor / Admin autenticado) */}
+                      {session && userRole === 'profesor' && (
+                        <button
+                          onClick={() => handleDeleteProduct(p.id, p.name)}
+                          className="absolute top-3 right-3 z-20 bg-red-600/90 hover:bg-red-500 text-white p-2 rounded-xl transition-all shadow-md backdrop-blur-sm"
+                          title="Eliminar producto"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
 
-                      <div className="pt-1">
-                        <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1.5">Elegir Talle:</label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {p.sizes.map((sz) => (
-                            <button
-                              key={sz}
-                              onClick={() => handleSelectSize(p.id, sz)}
-                              className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
-                                selectedSizes[p.id] === sz 
-                                  ? 'bg-[#FFD400] text-black border-[#FFD400] scale-105 font-black' 
-                                  : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700'
-                              }`}
-                            >
-                              {sz}
-                            </button>
-                          ))}
+                      <div className="space-y-3">
+                        <div className="relative aspect-square bg-zinc-900 rounded-2xl overflow-hidden">
+                          <img src={currentImg} alt={p.name} className="w-full h-full object-cover transition-all duration-300" />
+                          <span className={`absolute top-3 left-3 text-[9px] font-black px-2.5 py-1 rounded-md border ${p.badgeColor || 'bg-[#FFD400] text-black border-[#FFD400]'}`}>
+                            {p.badge || 'DISPONIBLE'}
+                          </span>
                         </div>
-                      </div>
 
-                      <div className="pt-3 border-t border-zinc-900 flex justify-between items-end text-xs">
+                        {/* Galería de Miniaturas si hay 2 o más imágenes */}
+                        {imageList.length > 1 && (
+                          <div className="flex gap-2 justify-center pt-1">
+                            {imageList.map((imgUrl, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleSelectImageIndex(p.id, idx)}
+                                className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all ${
+                                  currentImgIdx === idx ? 'border-[#FFD400] scale-105' : 'border-zinc-800 opacity-60 hover:opacity-100'
+                                }`}
+                              >
+                                <img src={imgUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
                         <div>
-                          <span className="text-zinc-500 block text-[10px] uppercase font-bold">Precio Total</span>
-                          <span className="font-black text-white text-base font-mono">{formatCurrency(p.price)}</span>
+                          <span className="text-[10px] text-zinc-500 font-bold uppercase block tracking-wider">{p.line || 'LÍNEA EL LEÓN'}</span>
+                          <h3 className="text-base font-black text-white uppercase leading-tight mt-0.5">{p.name}</h3>
+                          {p.tagline && <p className="text-xs text-zinc-400 italic mt-0.5">{p.tagline}</p>}
                         </div>
-                        <div className="text-right">
-                          <span className="text-[#FFD400] font-bold block text-[10px] uppercase">Seña Requerida</span>
-                          <span className="font-bold text-[#FFD400] text-sm font-mono">{formatCurrency(p.deposit)}</span>
+
+                        <p className="text-xs text-zinc-300 leading-relaxed">{p.description}</p>
+
+                        <div className="pt-1">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1.5">Elegir Talle:</label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(p.sizes || ['S', 'M', 'L', 'XL', 'XXL']).map((sz) => (
+                              <button
+                                key={sz}
+                                onClick={() => handleSelectSize(p.id, sz)}
+                                className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                                  selectedSizes[p.id] === sz 
+                                    ? 'bg-[#FFD400] text-black border-[#FFD400] scale-105 font-black' 
+                                    : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700'
+                                }`}
+                              >
+                                {sz}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-zinc-900 flex justify-between items-end text-xs">
+                          <div>
+                            <span className="text-zinc-500 block text-[10px] uppercase font-bold">Precio Total</span>
+                            <span className="font-black text-white text-base font-mono">{formatCurrency(p.price)}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[#FFD400] font-bold block text-[10px] uppercase">Seña Requerida</span>
+                            <span className="font-bold text-[#FFD400] text-sm font-mono">{formatCurrency(p.deposit)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <button
-                      onClick={() => handleStartReservation(p)}
-                      className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#FFD400]/10 transition-all"
-                    >
-                      QUIERO MI PRENDA
-                    </button>
-                  </div>
-                ))}
+                      <button
+                        onClick={() => handleStartReservation(p)}
+                        className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#FFD400]/10 transition-all"
+                      >
+                        QUIERO MI PRENDA
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -906,10 +979,30 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. SECCIÓN ADMIN */}
+        {/* 4. SECCIÓN ADMIN (Protegida) */}
         {activeTab === 'admin' && (
           <div className="animate-fade-in">
-            <Admin />
+            {session && userRole === 'profesor' ? (
+              <Admin />
+            ) : (
+              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8 sm:p-12 text-center max-w-md mx-auto space-y-5 my-8">
+                <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl flex items-center justify-center mx-auto">
+                  <Lock className="w-8 h-8" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-white uppercase">ACCESO RESTRINGIDO</h3>
+                  <p className="text-xs text-zinc-400">
+                    El Panel Creador es exclusivo para administradores. Iniciá sesión con tu cuenta para continuar.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsAuthOpen(true)}
+                  className="w-full bg-[#FFD400] hover:bg-yellow-400 text-black font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider transition-all"
+                >
+                  INICIAR SESIÓN COMO ADMIN
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -927,4 +1020,4 @@ export default function App() {
 
     </div>
   );
-}
+    }
